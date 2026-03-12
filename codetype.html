@@ -1,0 +1,2268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeType</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg:       #0f0f0f;
+  --surface:  #161616;
+  --surface2: #1c1c1c;
+  --border:   #262626;
+  --border2:  #333333;
+  --text:     #a0a0a0;
+  --dim:      #444444;
+  --hi:       #e8e8e8;
+  --correct:  #4ade80;
+  --wrong:    #f87171;
+  --nav-h:    52px;
+}
+
+html { font-size: 15px; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-weight: 300;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─ Nav ─ */
+nav {
+  height: var(--nav-h);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 50;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.nav-logo {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hi);
+  letter-spacing: 0.05em;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.2s ease;
+  cursor: pointer;
+}
+.nav-logo:hover {
+  color: var(--correct);
+}
+
+.nav-logo-icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.nav-logo:hover .nav-logo-icon {
+  transform: scale(1.1) rotate(3deg);
+}
+
+.nav-logo-icon svg {
+  width: 100%;
+  height: 100%;
+  color: var(--hi);
+  stroke-width: 1.5;
+}
+
+.nav-langs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 auto;
+  padding: 0 18px;
+  border-left: 1px solid rgba(38, 38, 38, 0.8);
+  border-right: 1px solid rgba(38, 38, 38, 0.8);
+}
+
+.nav-lang {
+  padding: 5px 12px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--dim);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.nav-lang:hover  { 
+  color: var(--text); 
+  background: rgba(232, 232, 232, 0.06);
+}
+.nav-lang.active { 
+  color: var(--bg); 
+  background: var(--hi);
+  font-weight: 600;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.nav-stat {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--dim);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: color 0.2s ease;
+  padding: 2px 0;
+  cursor: default;
+  user-select: none;
+}
+.nav-stat span { 
+  color: var(--correct);
+  font-weight: 600;
+  margin: 0 2px;
+}
+
+/* Icon buttons (shared styles) */
+.kbd-toggle, .sound-toggle, .stats-toggle, .help-toggle {
+  background: transparent; border: none; cursor: pointer; color: var(--dim);
+  padding: 4px 8px; display: flex; align-items: center; gap: 5px;
+  transition: all 0.15s ease; border-radius: 4px;
+}
+.kbd-toggle:hover, .sound-toggle:hover, .stats-toggle:hover, .help-toggle:hover { 
+  color: var(--text); background: rgba(232, 232, 232, 0.04);
+}
+.kbd-toggle:active, .stats-toggle:active, .help-toggle:active { transform: scale(0.92); }
+.kbd-toggle.active, .sound-toggle.enabled { color: var(--correct); }
+.kbd-toggle span, .sound-toggle span, .stats-toggle span, .help-toggle span {
+  display: none; font-size: 10px; letter-spacing: 0.04em; font-weight: 500; text-transform: uppercase;
+}
+@media (min-width: 768px) {
+  .kbd-toggle span, .sound-toggle span, .stats-toggle span, .help-toggle span { display: inline; }
+}
+.kbd-toggle svg, .sound-toggle svg, .stats-toggle svg, .help-toggle svg { width: 15px; height: 15px; }
+.help-card { padding: 32px; max-width: 500px; max-height: 80vh; overflow-y: auto; transform: translateY(20px) scale(0.95) !important; }
+
+.help-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--hi);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.help-item {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.help-item:last-child { border-bottom: none; }
+
+.help-key {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--hi);
+  padding: 4px 8px;
+  border-radius: 3px;
+  display: inline-block;
+  margin-bottom: 6px;
+}
+
+.help-desc {
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.help-close {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.close-help-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.close-help-btn:hover { border-color: var(--hi); color: var(--hi); }
+
+
+/* Infinity toggle btn */
+.infinity-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--dim);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s ease, transform 0.3s ease;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+.infinity-toggle:hover { color: var(--text); transform: scale(1.12) rotate(-5deg); }
+.infinity-toggle.active { color: var(--hi); animation: infinitySpin 0.6s ease-in-out; }
+
+@keyframes infinitySpin {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.15) rotate(10deg); }
+}
+
+/* ── Main ── */
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 64px 24px 48px;
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ── Timer display ── */
+.timer-display {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+  padding: 0 12px;
+}
+.timer-display.warning { color: var(--wrong); }
+.timer-display.active { color: var(--hi); }
+
+.time-select {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 40px;
+  justify-content: center;
+}
+.time-btn {
+  padding: 4px 12px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--dim);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.time-btn:hover { color: var(--text); border-color: var(--text); background: var(--surface); }
+.time-btn.active { background: var(--hi); color: var(--bg); border-color: var(--hi); animation: buttonPulse 0.3s ease-out; transform: scale(1); }
+
+@keyframes buttonPulse {
+  0% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+/* ── Diff tabs ── */
+.diff-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+.diff-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  background: transparent;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  border-radius: 4px;
+}
+.diff-btn::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0; right: 0;
+  height: 0;
+  background: var(--hi);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border-radius: 4px;
+  z-index: -1;
+}
+.diff-btn:hover { color: var(--text); border-color: var(--text); background: var(--surface2); }
+.diff-btn.active { color: var(--bg); border-color: var(--hi); background: var(--hi); }
+.diff-btn.active::after { height: 0; }
+.diff-sep { width: 1px; height: 12px; background: var(--border2); }
+
+/* ── Stats ── */
+.stats-row {
+  display: flex;
+  gap: 48px;
+  margin-bottom: 40px;
+  width: 100%;
+  justify-content: center;
+}
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.stat-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--hi);
+  line-height: 1;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.stat-val.pop {
+  animation: statPop 0.25s ease;
+}
+@keyframes statPop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+.stat-lbl {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+  transition: color 0.3s ease;
+  font-weight: 400;
+}
+
+/* ── Progress ── */
+.progress-track {
+  width: 100%;
+  height: 2px;
+  background: var(--border);
+  margin-bottom: 32px;
+  position: relative;
+  border-radius: 1px;
+}
+.progress-fill {
+  position: absolute;
+  top: 0; left: 0;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, rgba(168,160,255,0.7), var(--hi));
+  transition: width 0.08s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 12px rgba(232, 232, 232, 0.4);
+  border-radius: 1px;
+}
+
+/* ── Typing card ── */
+.typing-wrap {
+  width: 100%;
+  position: relative;
+  cursor: text;
+  margin-bottom: 36px;
+  transition: background 0.3s ease;
+}
+.typing-wrap.active {
+  background: rgba(168, 160, 255, 0.03);
+  border-radius: 4px;
+  padding: 20px;
+  margin-left: -20px;
+  margin-right: -20px;
+}
+
+.snippet-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  transition: opacity 0.2s;
+}
+.meta-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.meta-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--border2); }
+
+/* ── Snippet display with swap animation ── */
+#snippet-display {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  line-height: 2.2;
+  letter-spacing: 0.01em;
+  white-space: pre-wrap;
+  word-break: break-word;
+  min-height: 100px;
+  user-select: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+@media (min-width: 1024px) {
+  #snippet-display {
+    font-size: 20px;
+  }
+}
+#snippet-display.fade-out {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+#snippet-display.fade-in {
+  animation: snippetIn 0.25s ease forwards;
+}
+@keyframes snippetIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+#snippet-display .ch          { position: relative; transition: color 0.05s ease; }
+#snippet-display .ch.correct  { color: var(--correct); opacity: 0.95; }
+#snippet-display .ch.wrong    { color: var(--wrong); text-decoration: underline wavy var(--wrong); animation: wrongFlash 0.2s ease; }
+#snippet-display .ch.pending  { color: var(--dim); }
+#snippet-display .ch.active   { color: var(--hi); font-weight: 500; }
+#snippet-display .ch.active::before {
+  content: '';
+  position: absolute;
+  left: -2px; top: 2px; bottom: 2px;
+  width: 2px;
+  background: var(--hi);
+  animation: blink 1s step-end infinite;
+  box-shadow: 0 0 8px rgba(232, 232, 232, 0.5);
+  border-radius: 1px;
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+@keyframes wrongFlash {
+  0% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+@keyframes displayShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-5px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
+#snippet-display.shake { animation: displayShake 0.25s ease; }
+
+#hidden-input {
+  position: absolute;
+  opacity: 0;
+  width: 0; height: 0;
+  top: 0; left: 0;
+  border: none; outline: none; padding: 0;
+}
+
+.hint {
+  margin-top: 16px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  text-transform: uppercase;
+}
+.hint.hidden { opacity: 0; pointer-events: none; transform: translateY(-6px); }
+
+/* ── Actions ── */
+.actions {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+.action-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  background: transparent;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+.action-btn:hover { color: var(--hi); border-color: var(--hi); background: var(--surface); }
+.action-btn:active { transform: scale(0.97); }
+.kbd-hint {
+  font-size: 10px;
+  color: var(--dim);
+  letter-spacing: 0.06em;
+}
+
+/* ── On-Screen Keyboard ── */
+#keyboard {
+  width: 100%;
+  margin-top: 32px;
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  user-select: none;
+  animation: keyboardSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  z-index: 10;
+  background: var(--bg);
+  padding: 16px 0;
+  margin-left: -24px;
+  margin-right: -24px;
+  margin-bottom: -36px;
+  padding-left: 24px;
+  padding-right: 24px;
+  border-top: 1px solid var(--border);
+}
+#keyboard.visible { display: flex !important; }
+@keyframes keyboardSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.kbd-row {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+}
+
+.key {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--dim);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  min-width: 32px;
+  height: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  padding: 0 5px;
+}
+.key:hover { transform: translateY(-3px); background: var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+.key .shift-label {
+  font-size: 8px;
+  color: var(--border2);
+  line-height: 1;
+  margin-bottom: 1px;
+}
+.key .main-label {
+  line-height: 1;
+}
+.key.wide  { min-width: 52px; }
+.key.wider { min-width: 72px; }
+.key.space { min-width: 220px; }
+.key.next-key {
+  border-color: var(--hi);
+  color: var(--hi);
+  background: var(--surface2);
+  box-shadow: 0 0 10px rgba(232, 232, 232, 0.25);
+  transform: scale(1.08);
+  animation: keyPulse 0.5s ease-in-out infinite;
+}
+.key.flash-correct {
+  background: rgba(74,222,128,0.2);
+  border-color: var(--correct);
+  color: var(--correct);
+  box-shadow: 0 0 8px rgba(74,222,128,0.4);
+  animation: keyCorrect 0.3s ease-out;
+}
+.key.flash-wrong {
+  background: rgba(248,113,113,0.2);
+  border-color: var(--wrong);
+  color: var(--wrong);
+  box-shadow: 0 0 8px rgba(248,113,113,0.4);
+  animation: keyWrong 0.4s ease-out;
+}
+@keyframes keyPulse {
+  0%, 100% { transform: scale(1.08); }
+  50% { transform: scale(1.15); }
+}
+@keyframes keyCorrect {
+  0% { transform: scale(1.15); background: rgba(74,222,128,0.3); }
+  100% { transform: scale(1.08); background: rgba(74,222,128,0.2); }
+}
+@keyframes keyWrong {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-3px); }
+  40% { transform: translateX(3px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+/* ── History ── */
+.history-row {
+  width: 100%;
+  margin-top: 80px;
+  padding-top: 40px;
+  border-top: 2px solid var(--border);
+}
+.history-label {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+.history-entries { display: flex; gap: 8px; flex-wrap: wrap; }
+.h-entry {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--dim);
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  animation: historySlideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.2s ease;
+  cursor: default;
+}
+.h-entry:hover {
+  border-color: var(--text);
+  color: var(--text);
+  background: var(--surface);
+}
+.h-entry .h-wpm { color: var(--text); transition: color 0.3s ease; }
+.h-entry:hover .h-wpm { color: var(--correct); }
+@keyframes historySlideIn {
+  from { opacity: 0; transform: translateX(-16px) scale(0.9); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+.h-entry .h-wpm { color: var(--text); }
+
+/* ── Modal ── */
+#modal, #help-modal {
+  visibility: hidden; opacity: 0; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85); z-index: 200; display: flex;
+  align-items: center; justify-content: center;
+  transition: opacity 0.35s ease, visibility 0.35s ease; backdrop-filter: blur(2px);
+}
+#modal.show, #help-modal.show { visibility: visible; opacity: 1; }
+.modal-card, .help-card {
+  background: var(--surface); border: 1px solid var(--border2); border-radius: 8px;
+  width: 90%; transform: translateY(30px) scale(0.92) rotateX(10deg);
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+#modal.show .modal-card, #help-modal.show .help-card { transform: translateY(0) scale(1) rotateX(0deg); }
+.modal-card { padding: 48px 56px; max-width: 440px; text-align: center; }
+.modal-wpm { font-family: 'JetBrains Mono', monospace; font-size: 64px; font-weight: 500;
+  color: var(--hi); line-height: 1; margin-bottom: 4px; }
+.modal-wpm-lbl { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--dim); margin-bottom: 36px; }
+.modal-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 36px;
+}
+.modal-stat {
+  background: var(--surface2);
+  padding: 16px 8px;
+  transition: all 0.4s ease;
+  border-radius: 4px;
+}
+.modal-stat:hover {
+  background: rgba(232, 232, 232, 0.08);
+  transform: translateY(-4px) scale(1.05);
+}
+.modal-stat .mv {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--hi);
+  margin-bottom: 4px;
+  animation: modalCountUp 0.6s ease-out;
+}
+@keyframes modalCountUp {
+  from { opacity: 0; transform: translateY(10px) scale(0.8); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal-stat .ml {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.modal-actions { display: flex; gap: 12px; justify-content: center; }
+.modal-btn {
+  padding: 10px 24px;
+  border-radius: 4px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.modal-btn:hover { border-color: var(--hi); color: var(--hi); transform: scale(1.08); }
+.modal-btn:active { transform: scale(0.96); }
+.modal-btn.primary { background: var(--hi); color: var(--bg); border-color: var(--hi); }
+.modal-btn.primary:hover { background: var(--text); border-color: var(--text); box-shadow: 0 8px 24px rgba(232, 232, 232, 0.2); }
+
+/* ── Confetti & Celebrations ── */
+#confetti-container { position: fixed; inset: 0; pointer-events: none; z-index: 150; overflow: hidden; }
+.confetti-piece { position: absolute; pointer-events: none; width: 18px; height: 18px;
+  background: var(--color, var(--correct)); border-radius: 50%;
+  box-shadow: 0 0 8px var(--color, var(--correct)), 0 0 16px var(--color, var(--correct));
+  animation: fall 3s ease-in forwards, spin 1s linear infinite; animation-delay: var(--delay, 0s); }
+@keyframes fall { 0%, 80% { opacity: 1; } to { transform: translateY(100vh) translateX(var(--tx)); opacity: 0; } }
+@keyframes spin { to { transform: rotateZ(360deg); } }
+#modal.celebrate { animation: celebrate 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes celebrate { 0% { transform: scale(0.95) rotateZ(-2deg); } 50% { transform: scale(1.05) rotateZ(2deg); } 100% { transform: scale(1) rotateZ(0deg); } }
+#modal.celebrate .modal-wpm { animation: wpmPulse 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes wpmPulse { 0%, 100% { transform: scale(1); color: var(--hi); } 50% { transform: scale(1.1); color: var(--correct); text-shadow: 0 0 20px rgba(74, 222, 128, 0.5); } }
+
+/* ── Loading Screen ── */
+#loading-screen { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex;
+  flex-direction: column; align-items: center; justify-content: center; opacity: 1;
+  transition: opacity 0.5s ease, visibility 0.5s ease; visibility: visible; }
+#loading-screen.hidden { opacity: 0; visibility: hidden; }
+.loading-container { display: flex; flex-direction: column; align-items: center; gap: 32px; }
+.loading-logo { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 600;
+  color: var(--hi); letter-spacing: 0.05em; }
+.loading-logo span { color: var(--correct); }
+.loading-dots { display: flex; align-items: center; gap: 10px; }
+.loading-dots i { display: block; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--correct); opacity: 0.2;
+  animation: dotPulse 1.2s ease-in-out infinite; }
+.loading-dots i:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots i:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dotPulse { 0%, 80%, 100% { opacity: 0.2; transform: scale(0.85); }
+  40% { opacity: 1; transform: scale(1); } }
+
+/* ── Footer ── */
+footer {
+  margin-top: auto;
+  border-top: 1px solid var(--border);
+  background: linear-gradient(180deg, var(--bg) 0%, var(--surface2) 100%);
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.footer-made-by {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--dim);
+  letter-spacing: 0.04em;
+}
+
+.footer-made-by a {
+  color: var(--text);
+  text-decoration: none;
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+  font-weight: 500;
+}
+
+.footer-made-by a:hover {
+  color: var(--correct);
+  text-shadow: 0 0 6px rgba(74, 222, 128, 0.3);
+}
+
+.footer-links {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.footer-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--dim);
+  text-decoration: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.footer-link:hover {
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--border2);
+}
+
+.footer-link svg {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.2s ease;
+}
+
+.footer-link:hover svg {
+  transform: scale(1.15);
+}
+
+@media (max-width: 600px) {
+  nav { padding: 0 12px; }
+  .nav-right { order: 3; gap: 6px; display: flex !important; margin-top: 8px; width: 100%; justify-content: center; }
+  .stats-toggle span, .help-toggle span, .kbd-toggle span, .sound-toggle span {
+    display: none !important;
+  }
+  .stats-toggle, .help-toggle, .kbd-toggle, .sound-toggle {
+    padding: 4px;
+  }
+  .nav-lang { padding: 4px 10px; font-size: 11px; }
+  main { padding: 32px 16px 24px; max-width: 100%; }
+  .stats-row { gap: 20px; flex-wrap: wrap; }
+  .stat-val { font-size: 18px; }
+  .stat-item { flex: 1; min-width: 80px; }
+  #snippet-display { font-size: 14px; line-height: 1.9; }
+  .modal-card { padding: 32px 20px; }
+  .modal-wpm { font-size: 48px; }
+  #keyboard { display: none !important; }
+  .diff-row { flex-wrap: wrap; }
+  .diff-btn { padding: 4px 10px; font-size: 10px; }
+  .time-select { gap: 6px; }
+  .time-btn { padding: 3px 10px; font-size: 10px; }
+  footer { padding: 20px 16px; gap: 12px; }
+  .footer-links { gap: 10px; }
+  .footer-link { padding: 4px 10px; font-size: 10px; }
+  .footer-link span { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- Loading Screen -->
+<div id="loading-screen">
+  <div class="loading-container">
+    <div class="loading-logo">Code<span>Type</span></div>
+    <div class="loading-dots">
+      <i></i><i></i><i></i>
+    </div>
+  </div>
+</div>
+
+<div id="confetti-container"></div>
+
+<nav>
+  <div class="nav-logo" onclick="window.location.reload()" title="CodeType">
+    <div class="nav-logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" 
+           stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="6" width="20" height="13" rx="2"/>
+        <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h.01M12 14h.01M16 14h.01M6 14h.01M18 14h.01M8 10h.01"/>
+        <path d="M9 17h6"/>
+      </svg>
+    </div>
+    <span>codetype</span>
+  </div>
+
+  <div class="nav-langs" id="nav-langs">
+    <button class="nav-lang active" data-lang="python">python</button>
+    <button class="nav-lang"        data-lang="cpp">c++</button>
+  </div>
+
+  <div class="nav-right">
+    <div class="nav-stat">best&nbsp;<span id="nav-best">--</span>&nbsp;wpm</div>
+    <div class="nav-stat">runs&nbsp;<span id="nav-runs">0</span></div>
+    <button class="stats-toggle" id="stats-toggle" title="View statistics">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="2" x2="12" y2="22"/>
+        <path d="M17 5h4v4h-4zM3 9h4v12H3z"/>
+        <path d="M10 13h4v8h-4z"/>
+      </svg>
+      <span>stats</span>
+    </button>
+    <button class="help-toggle" id="help-toggle" title="Keyboard shortcuts">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 16v-4M12 8h.01"/>
+      </svg>
+      <span>help</span>
+    </button>
+    <button class="kbd-toggle" id="kbd-toggle" title="Toggle keyboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="6" width="20" height="13" rx="2"/>
+        <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h.01M12 14h.01M16 14h.01M6 14h.01M18 14h.01M8 10h.01"/>
+        <path d="M9 17h6"/>
+      </svg>
+      <span>kbd</span>
+    </button>
+    <button class="sound-toggle" id="sound-toggle" title="Toggle sound">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+        <path d="M15.54 3.54a9 9 0 0 1 0 12.73M19.07 4.93a13 13 0 0 1 0 18.14"/>
+      </svg>
+      <span>sound</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+  <div class="diff-row" id="diff-row">
+    <button class="diff-btn active" data-diff="easy">easy</button>
+    <div class="diff-sep"></div>
+    <button class="diff-btn" data-diff="medium">medium</button>
+    <div class="diff-sep"></div>
+    <button class="diff-btn" data-diff="hard">hard</button>
+  </div>
+
+  <div class="time-select" id="time-row">
+    <button class="time-btn" data-time="15">15s</button>
+    <button class="time-btn" data-time="30">30s</button>
+    <button class="time-btn active" data-time="60">60s</button>
+    <button class="time-btn" data-time="0">∞</button>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-item"><div class="stat-val" id="sv-wpm">0</div><div class="stat-lbl">wpm</div></div>
+    <div class="stat-item"><div class="stat-val" id="sv-acc">100</div><div class="stat-lbl">acc %</div></div>
+    <div class="stat-item"><div class="stat-val" id="sv-time">0</div><div class="stat-lbl">sec</div></div>
+    <div class="stat-item"><div class="stat-val" id="sv-err">0</div><div class="stat-lbl">errors</div></div>
+  </div>
+
+  <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+
+  <div class="typing-wrap" onclick="focusInput()">
+    <div class="snippet-meta">
+      <span class="meta-tag" id="meta-source">leetcode</span>
+      <div class="meta-dot"></div>
+      <span class="meta-tag" id="meta-problem">two sum</span>
+      <div class="meta-dot"></div>
+      <span class="meta-tag" id="meta-pattern">hash map</span>
+    </div>
+    <div id="snippet-display"></div>
+    <input id="hidden-input" type="text"
+      autocomplete="off" autocorrect="off" autocapitalize="off"
+      spellcheck="false" tabindex="0" aria-hidden="true">
+    <div class="hint" id="hint">press any key to start</div>
+  </div>
+
+  <!-- On-Screen Keyboard -->
+  <div id="keyboard">
+    <!-- Row 0: Number / special chars row -->
+    <div class="kbd-row" id="kbd-row-num"></div>
+    <!-- Row 1: QWERTYUIOP -->
+    <div class="kbd-row" id="kbd-row-1"></div>
+    <!-- Row 2: ASDFGHJKL -->
+    <div class="kbd-row" id="kbd-row-2"></div>
+    <!-- Row 3: ZXCVBNM -->
+    <div class="kbd-row" id="kbd-row-3"></div>
+    <!-- Row 4: Space row -->
+    <div class="kbd-row" id="kbd-row-4"></div>
+  </div>
+
+  <div class="actions">
+    <button class="action-btn" id="btn-new">new</button>
+    <button class="action-btn" id="btn-retry">retry</button>
+    <button class="action-btn" id="btn-skip">skip</button>
+    <span class="kbd-hint">esc = retry &nbsp;·&nbsp; backspace = delete</span>
+  </div>
+
+  <div class="history-row">
+    <div class="history-label">history</div>
+    <div class="history-entries" id="history-entries">
+      <span style="font-size:11px;color:var(--dim);">no runs yet</span>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="footer-made-by">made by <a href="https://portfolio-of-wasiq.vercel.app/" target="_blank" rel="noopener noreferrer">wasiq</a></div>
+  <div class="footer-links">
+    <a href="https://github.com/Wasiq2006" class="footer-link" target="_blank" rel="noopener noreferrer" title="GitHub">
+      <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+      </svg>
+      <span>github</span>
+    </a>
+    <a href="https://linkedin.com/in/muhammad-wasiq-mansoor-35332927a" class="footer-link" target="_blank" rel="noopener noreferrer" title="LinkedIn">
+      <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.475-2.236-1.986-2.236-1.081 0-1.722.722-2.004 1.418-.103.249-.129.597-.129.946v5.441h-3.554s.05-8.81 0-9.728h3.554v1.375c.425-.654 1.187-1.586 2.882-1.586 2.105 0 3.685 1.374 3.685 4.342v5.597zM5.337 8.855c-1.144 0-1.915-.758-1.915-1.706 0-.956.768-1.703 1.959-1.703 1.188 0 1.913.747 1.938 1.703 0 .948-.75 1.706-1.982 1.706zm1.581 11.597H3.719V9.724h3.199v10.728zM22.094 0H1.906C.851 0 0 .756 0 1.694v20.612C0 23.244.851 24 1.906 24h20.188C23.149 24 24 23.244 24 22.306V1.694C24 .756 23.149 0 22.094 0z"/>
+      </svg>
+      <span>linkedin</span>
+    </a>
+    <a href="mailto:wasiqmansoor2006@gmail.com" class="footer-link" title="Email">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+        <polyline points="22,6 12,13 2,6"/>
+      </svg>
+      <span>email</span>
+    </a>
+  </div>
+</footer>
+
+<div id="modal">
+  <div class="modal-card">
+    <div class="modal-wpm" id="m-wpm">0</div>
+    <div class="modal-wpm-lbl">words per minute</div>
+    <div class="modal-grid">
+      <div class="modal-stat"><div class="mv" id="m-acc">100%</div><div class="ml">accuracy</div></div>
+      <div class="modal-stat"><div class="mv" id="m-time">0s</div><div class="ml">time</div></div>
+      <div class="modal-stat"><div class="mv" id="m-err">0</div><div class="ml">errors</div></div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn primary" id="m-next">next</button>
+      <button class="modal-btn"         id="m-retry">retry</button>
+    </div>
+  </div>
+</div>
+
+<!-- Help Modal -->
+<div id="help-modal">
+  <div class="help-card">
+    <div class="help-title">keyboard shortcuts</div>
+
+    <div class="help-item">
+      <div class="help-key">tab</div>
+      <div class="help-desc">convert tab to 4 spaces</div>
+    </div>
+
+    <div class="help-item">
+      <div class="help-key">enter</div>
+      <div class="help-desc">insert line break</div>
+    </div>
+
+    <div class="help-item">
+      <div class="help-key">backspace</div>
+      <div class="help-desc">delete previous character</div>
+    </div>
+    <div class="help-item">
+      <div class="help-key">esc</div>
+      <div class="help-desc">reset current snippet</div>
+    </div>
+
+    <div class="help-item">
+      <div class="help-key">?</div>
+      <div class="help-desc">show this help dialog</div>
+    </div>
+
+    <div class="help-close">
+      <button class="close-help-btn" id="close-help">close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ================================================================
+   SNIPPET DATABASE  ─  20 per difficulty per language
+   LeetCode & Codeforces verified solutions.
+   Python: double-quoted strings, idiomatic.
+   C++: single-quoted char literals, (int)size() casts.
+================================================================ */
+const DB = {
+
+  /* ───────────────────────────────────────────────────────────
+     PYTHON
+  ─────────────────────────────────────────────────────────── */
+  python: {
+    easy: [
+      {
+        source:'leetcode', problem:'two sum', pattern:'hash map',
+        code:['def twoSum(nums, target):','    seen = {}','    for i, n in enumerate(nums):','        diff = target - n','        if diff in seen:','            return [seen[diff], i]','        seen[n] = i'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'valid parentheses', pattern:'stack',
+        code:['def isValid(s):','    stack = []','    pairs = {\")\": \"(\", \"}\": \"{\", \"]\": \"[\"}','    for ch in s:','        if ch in pairs:','            if not stack or stack[-1] != pairs[ch]:','                return False','            stack.pop()','        else:','            stack.append(ch)','    return not stack'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'reverse linked list', pattern:'iteration',
+        code:['def reverseList(head):','    prev = None','    curr = head','    while curr:','        nxt = curr.next','        curr.next = prev','        prev = curr','        curr = nxt','    return prev'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'best time to buy stock', pattern:'greedy',
+        code:['def maxProfit(prices):','    min_price = float(\"inf\")','    max_profit = 0','    for price in prices:','        if price < min_price:','            min_price = price','        elif price - min_price > max_profit:','            max_profit = price - min_price','    return max_profit'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'climbing stairs', pattern:'dp',
+        code:['def climbStairs(n):','    if n <= 2:','        return n','    a, b = 1, 2','    for _ in range(3, n + 1):','        a, b = b, a + b','    return b'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'invert binary tree', pattern:'recursion',
+        code:['def invertTree(root):','    if not root:','        return None','    root.left, root.right = (','        invertTree(root.right),','        invertTree(root.left)','    )','    return root'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'maximum depth of binary tree', pattern:'dfs',
+        code:['def maxDepth(root):','    if not root:','        return 0','    return 1 + max(','        maxDepth(root.left),','        maxDepth(root.right)','    )'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'merge two sorted lists', pattern:'recursion',
+        code:['def mergeTwoLists(l1, l2):','    if not l1 or (l2 and l2.val < l1.val):','        l1, l2 = l2, l1','    if l1:','        l1.next = mergeTwoLists(l1.next, l2)','    return l1'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'contains duplicate', pattern:'hash set',
+        code:['def containsDuplicate(nums):','    seen = set()','    for n in nums:','        if n in seen:','            return True','        seen.add(n)','    return False'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'missing number', pattern:'math',
+        code:['def missingNumber(nums):','    n = len(nums)','    return n * (n + 1) // 2 - sum(nums)'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'single number', pattern:'bit manipulation',
+        code:['def singleNumber(nums):','    result = 0','    for n in nums:','        result ^= n','    return result'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'palindrome number', pattern:'math',
+        code:['def isPalindrome(x):','    if x < 0:','        return False','    s = str(x)','    return s == s[::-1]'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'fibonacci number', pattern:'dp',
+        code:['def fib(n):','    if n < 2:','        return n','    a, b = 0, 1','    for _ in range(2, n + 1):','        a, b = b, a + b','    return b'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'binary search', pattern:'binary search',
+        code:['def search(nums, target):','    lo, hi = 0, len(nums) - 1','    while lo <= hi:','        mid = (lo + hi) // 2','        if nums[mid] == target:','            return mid','        elif nums[mid] < target:','            lo = mid + 1','        else:','            hi = mid - 1','    return -1'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'watermelon', pattern:'math',
+        code:['w = int(input())','if w > 2 and w % 2 == 0:','    print(\"YES\")','else:','    print(\"NO\")'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'way too long words', pattern:'string',
+        code:['n = int(input())','for _ in range(n):','    w = input()','    if len(w) > 10:','        print(w[0] + str(len(w) - 2) + w[-1])','    else:','        print(w)'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'team olympiad', pattern:'simulation',
+        code:['n = int(input())','p, m, c = map(int, input().split())','print(min(p, m, c))'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'theatre square', pattern:'math',
+        code:['import math','n, m, a = map(int, input().split())','print(math.ceil(n / a) * math.ceil(m / a))'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'ultra fast mathematician', pattern:'xor',
+        code:['n = int(input())','for _ in range(n):','    a, b = input().split()','    print(int(a) ^ int(b))'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'helpful maths', pattern:'sorting',
+        code:['s = input()','digits = s.split(\"+\")','digits.sort()','print(\"+\".join(digits))'].join('\n'),
+      },
+    ],
+
+    medium: [
+      {
+        source:'leetcode', problem:'longest substring no repeat', pattern:'sliding window',
+        code:['def lengthOfLongestSubstring(s):','    left = 0','    seen = {}','    best = 0','    for right, ch in enumerate(s):','        if ch in seen and seen[ch] >= left:','            left = seen[ch] + 1','        seen[ch] = right','        best = max(best, right - left + 1)','    return best'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'number of islands', pattern:'dfs',
+        code:['def numIslands(grid):','    count = 0','    def dfs(r, c):','        if (r < 0 or c < 0 or','                r >= len(grid) or c >= len(grid[0])','                or grid[r][c] != \"1\"):','            return','        grid[r][c] = \"0\"','        dfs(r+1,c); dfs(r-1,c)','        dfs(r,c+1); dfs(r,c-1)','    for r in range(len(grid)):','        for c in range(len(grid[0])):','            if grid[r][c] == \"1\":','                dfs(r, c)','                count += 1','    return count'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'coin change', pattern:'dp',
+        code:['def coinChange(coins, amount):','    dp = [float(\"inf\")] * (amount + 1)','    dp[0] = 0','    for coin in coins:','        for i in range(coin, amount + 1):','            dp[i] = min(dp[i], dp[i - coin] + 1)','    return dp[amount] if dp[amount] != float(\"inf\") else -1'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'product of array except self', pattern:'prefix & suffix',
+        code:['def productExceptSelf(nums):','    n = len(nums)','    out = [1] * n','    prefix = 1','    for i in range(n):','        out[i] = prefix','        prefix *= nums[i]','    suffix = 1','    for i in range(n - 1, -1, -1):','        out[i] *= suffix','        suffix *= nums[i]','    return out'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'top k frequent elements', pattern:'bucket sort',
+        code:['def topKFrequent(nums, k):','    count = {}','    freq = [[] for _ in range(len(nums) + 1)]','    for n in nums:','        count[n] = count.get(n, 0) + 1','    for n, c in count.items():','        freq[c].append(n)','    res = []','    for i in range(len(freq) - 1, 0, -1):','        for n in freq[i]:','            res.append(n)','            if len(res) == k:','                return res'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'find minimum in rotated array', pattern:'binary search',
+        code:['def findMin(nums):','    lo, hi = 0, len(nums) - 1','    while lo < hi:','        mid = (lo + hi) // 2','        if nums[mid] > nums[hi]:','            lo = mid + 1','        else:','            hi = mid','    return nums[lo]'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'container with most water', pattern:'two pointers',
+        code:['def maxArea(height):','    left, right = 0, len(height) - 1','    best = 0','    while left < right:','        area = min(height[left], height[right]) * (right - left)','        best = max(best, area)','        if height[left] < height[right]:','            left += 1','        else:','            right -= 1','    return best'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'search in rotated sorted array', pattern:'binary search',
+        code:['def search(nums, target):','    lo, hi = 0, len(nums) - 1','    while lo <= hi:','        mid = (lo + hi) // 2','        if nums[mid] == target:','            return mid','        if nums[lo] <= nums[mid]:','            if nums[lo] <= target < nums[mid]:','                hi = mid - 1','            else:','                lo = mid + 1','        else:','            if nums[mid] < target <= nums[hi]:','                lo = mid + 1','            else:','                hi = mid - 1','    return -1'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'longest consecutive sequence', pattern:'hash set',
+        code:['def longestConsecutive(nums):','    num_set = set(nums)','    best = 0','    for n in num_set:','        if n - 1 not in num_set:','            curr = n','            length = 1','            while curr + 1 in num_set:','                curr += 1','                length += 1','            best = max(best, length)','    return best'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'max product subarray', pattern:'dp',
+        code:['def maxProduct(nums):','    res = max(nums)','    cur_min = cur_max = 1','    for n in nums:','        if n == 0:','            cur_min = cur_max = 1','            continue','        tmp = cur_max * n','        cur_max = max(n, tmp, cur_min * n)','        cur_min = min(n, tmp, cur_min * n)','        res = max(res, cur_max)','    return res'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'course schedule', pattern:'topological sort',
+        code:['def canFinish(numCourses, prerequisites):','    adj = [[] for _ in range(numCourses)]','    for a, b in prerequisites:','        adj[b].append(a)','    visited = set()','    def dfs(node):','        if node in visited:','            return False','        adj[node] == [] and None','        visited.add(node)','        for nei in adj[node]:','            if not dfs(nei):','                return False','        visited.remove(node)','        adj[node] = []','        return True','    return all(dfs(i) for i in range(numCourses))'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'reorder list', pattern:'linked list',
+        code:['def reorderList(head):','    slow = fast = head','    while fast and fast.next:','        slow = slow.next','        fast = fast.next.next','    prev, curr = None, slow.next','    slow.next = None','    while curr:','        nxt = curr.next','        curr.next = prev','        prev = curr','        curr = nxt','    first, second = head, prev','    while second:','        tmp1, tmp2 = first.next, second.next','        first.next = second','        second.next = tmp1','        first, second = tmp1, tmp2'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'next round', pattern:'simulation',
+        code:['n, k = map(int, input().split())','scores = list(map(int, input().split()))','threshold = scores[k - 1]','print(sum(1 for s in scores if s >= threshold and s > 0))'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'nearly lucky number', pattern:'string',
+        code:['n = input()','lucky = sum(1 for d in n if d in \"47\")','print(\"YES\" if str(lucky) in \"47\" and all(c in \"47\" for c in str(lucky)) else \"NO\")'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'sereja and suffixes', pattern:'suffix max',
+        code:['n = int(input())','a = list(map(int, input().split()))','m = 0','suffix_max = []','for x in reversed(a):','    m = max(m, x)','    suffix_max.append(m)','suffix_max.reverse()','q = int(input())','for _ in range(q):','    i = int(input()) - 1','    print(suffix_max[i])'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'polycarp likes strings', pattern:'string',
+        code:['s = input()','count = 0','i = 0','while i < len(s):','    j = i','    while j < len(s) and s[j] == s[i]:','        j += 1','    if j - i >= 2:','        count += 1','    i = j','print(count)'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'pangram', pattern:'string',
+        code:['n = int(input())','s = input().lower()','print(\"YES\" if len(set(s)) == 26 else \"NO\")'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'decode ways', pattern:'dp',
+        code:['def numDecodings(s):','    if not s or s[0] == \"0\":','        return 0','    n = len(s)','    dp = [0] * (n + 1)','    dp[0] = dp[1] = 1','    for i in range(2, n + 1):','        if s[i-1] != \"0\":','            dp[i] += dp[i-1]','        two = int(s[i-2:i])','        if 10 <= two <= 26:','            dp[i] += dp[i-2]','    return dp[n]'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'combination sum', pattern:'backtracking',
+        code:['def combinationSum(candidates, target):','    res = []','    def dfs(i, cur, total):','        if total == target:','            res.append(cur[:])','            return','        if i >= len(candidates) or total > target:','            return','        cur.append(candidates[i])','        dfs(i, cur, total + candidates[i])','        cur.pop()','        dfs(i + 1, cur, total)','    dfs(0, [], 0)','    return res'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'word search', pattern:'backtracking',
+        code:['def exist(board, word):','    rows, cols = len(board), len(board[0])','    path = set()','    def dfs(r, c, i):','        if i == len(word):','            return True','        if (r < 0 or c < 0 or r >= rows or c >= cols','                or word[i] != board[r][c]','                or (r, c) in path):','            return False','        path.add((r, c))','        res = (dfs(r+1,c,i+1) or dfs(r-1,c,i+1) or','               dfs(r,c+1,i+1) or dfs(r,c-1,i+1))','        path.remove((r, c))','        return res','    return any(dfs(r,c,0) for r in range(rows) for c in range(cols))'].join('\n'),
+      },
+    ],
+
+    hard: [
+      {
+        source:'leetcode', problem:'trapping rain water', pattern:'two pointers',
+        code:['def trap(height):','    left, right = 0, len(height) - 1','    left_max = right_max = water = 0','    while left < right:','        if height[left] < height[right]:','            if height[left] >= left_max:','                left_max = height[left]','            else:','                water += left_max - height[left]','            left += 1','        else:','            if height[right] >= right_max:','                right_max = height[right]','            else:','                water += right_max - height[right]','            right -= 1','    return water'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'longest valid parentheses', pattern:'stack',
+        code:['def longestValidParentheses(s):','    stack = [-1]','    best = 0','    for i, ch in enumerate(s):','        if ch == \"(\":','            stack.append(i)','        else:','            stack.pop()','            if not stack:','                stack.append(i)','            else:','                best = max(best, i - stack[-1])','    return best'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'median of two sorted arrays', pattern:'binary search',
+        code:['def findMedianSortedArrays(nums1, nums2):','    A, B = nums1, nums2','    if len(A) > len(B):','        A, B = B, A','    m, n = len(A), len(B)','    lo, hi = 0, m','    while lo <= hi:','        i = (lo + hi) // 2','        j = (m + n + 1) // 2 - i','        maxA = float(\"-inf\") if i == 0 else A[i-1]','        minA = float(\"inf\")  if i == m else A[i]','        maxB = float(\"-inf\") if j == 0 else B[j-1]','        minB = float(\"inf\")  if j == n else B[j]','        if maxA <= minB and maxB <= minA:','            if (m + n) % 2:','                return float(max(maxA, maxB))','            return (max(maxA, maxB) + min(minA, minB)) / 2','        elif maxA > minB:','            hi = i - 1','        else:','            lo = i + 1'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'minimum window substring', pattern:'sliding window',
+        code:['def minWindow(s, t):','    if not t: return \"\"','    need = {}','    for ch in t:','        need[ch] = need.get(ch, 0) + 1','    win = {}','    formed = required = len(need)','    left = best_len = 0','    best_l = -1','    for right, ch in enumerate(s):','        win[ch] = win.get(ch, 0) + 1','        if ch in need and win[ch] == need[ch]:','            formed -= 1','        while formed == 0:','            if best_l == -1 or right - left + 1 < best_len:','                best_len = right - left + 1','                best_l = left','            lc = s[left]','            win[lc] -= 1','            if lc in need and win[lc] < need[lc]:','                formed += 1','            left += 1','    return \"\" if best_l == -1 else s[best_l:best_l + best_len]'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'binary tree maximum path sum', pattern:'dfs',
+        code:['def maxPathSum(root):','    res = [root.val]','    def dfs(node):','        if not node:','            return 0','        left = max(dfs(node.left), 0)','        right = max(dfs(node.right), 0)','        res[0] = max(res[0], node.val + left + right)','        return node.val + max(left, right)','    dfs(root)','    return res[0]'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'n-queens', pattern:'backtracking',
+        code:['def solveNQueens(n):','    col = set()','    posDiag = set()','    negDiag = set()','    board = [[\".\"]*n for _ in range(n)]','    res = []','    def backtrack(r):','        if r == n:','            res.append([\"\".join(row) for row in board])','            return','        for c in range(n):','            if c in col or (r+c) in posDiag or (r-c) in negDiag:','                continue','            col.add(c); posDiag.add(r+c); negDiag.add(r-c)','            board[r][c] = \"Q\"','            backtrack(r + 1)','            col.remove(c); posDiag.remove(r+c); negDiag.remove(r-c)','            board[r][c] = \".\"','    backtrack(0)','    return res'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'serialize and deserialize binary tree', pattern:'bfs',
+        code:['from collections import deque','def serialize(root):','    if not root: return \"N\"','    q = deque([root])','    res = []','    while q:','        node = q.popleft()','        if node:','            res.append(str(node.val))','            q.append(node.left)','            q.append(node.right)','        else:','            res.append(\"N\")','    return \",\".join(res)','def deserialize(data):','    vals = data.split(\",\")','    if vals[0] == \"N\": return None','    root = TreeNode(int(vals[0]))','    q = deque([root])','    i = 1','    while q:','        node = q.popleft()','        if vals[i] != \"N\":','            node.left = TreeNode(int(vals[i]))','            q.append(node.left)','        i += 1','        if vals[i] != \"N\":','            node.right = TreeNode(int(vals[i]))','            q.append(node.right)','        i += 1','    return root'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'sliding window maximum', pattern:'deque',
+        code:['from collections import deque','def maxSlidingWindow(nums, k):','    q = deque()','    res = []','    for i, n in enumerate(nums):','        while q and nums[q[-1]] < n:','            q.pop()','        q.append(i)','        if q[0] == i - k:','            q.popleft()','        if i >= k - 1:','            res.append(nums[q[0]])','    return res'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'merge k sorted lists', pattern:'min heap',
+        code:['import heapq','def mergeKLists(lists):','    heap = []','    for i, node in enumerate(lists):','        if node:','            heapq.heappush(heap, (node.val, i, node))','    dummy = ListNode(0)','    curr = dummy','    while heap:','        val, i, node = heapq.heappop(heap)','        curr.next = node','        curr = curr.next','        if node.next:','            heapq.heappush(heap, (node.next.val, i, node.next))','    return dummy.next'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'largest rectangle in histogram', pattern:'stack',
+        code:['def largestRectangleArea(heights):','    stack = []','    max_area = 0','    for i, h in enumerate(heights):','        start = i','        while stack and stack[-1][1] > h:','            idx, height = stack.pop()','            max_area = max(max_area, height * (i - idx))','            start = idx','        stack.append((start, h))','    for i, h in stack:','        max_area = max(max_area, h * (len(heights) - i))','    return max_area'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'regular expression matching', pattern:'dp',
+        code:['def isMatch(s, p):','    dp = {}','    def dfs(i, j):','        if (i, j) in dp:','            return dp[(i, j)]','        if i >= len(s) and j >= len(p):','            return True','        if j >= len(p):','            return False','        match = i < len(s) and (s[i] == p[j] or p[j] == \".\")','        if j + 1 < len(p) and p[j+1] == \"*\":','            dp[(i,j)] = (dfs(i, j+2) or (match and dfs(i+1, j)))','            return dp[(i,j)]','        if match:','            dp[(i,j)] = dfs(i+1, j+1)','            return dp[(i,j)]','        dp[(i,j)] = False','        return False','    return dfs(0, 0)'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'burst balloons', pattern:'interval dp',
+        code:['def maxCoins(nums):','    nums = [1] + nums + [1]','    n = len(nums)','    dp = {}','    def dfs(l, r):','        if l > r:','            return 0','        if (l, r) in dp:','            return dp[(l, r)]','        dp[(l, r)] = 0','        for k in range(l, r + 1):','            coins = nums[l-1] * nums[k] * nums[r+1]','            coins += dfs(l, k-1) + dfs(k+1, r)','            dp[(l, r)] = max(dp[(l, r)], coins)','        return dp[(l, r)]','    return dfs(1, n - 2)'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'longest increasing path in matrix', pattern:'dfs + memo',
+        code:['def longestIncreasingPath(matrix):','    rows, cols = len(matrix), len(matrix[0])','    memo = {}','    def dfs(r, c):','        if (r, c) in memo:','            return memo[(r, c)]','        res = 1','        for dr, dc in [(1,0),(-1,0),(0,1),(0,-1)]:','            nr, nc = r + dr, c + dc','            if (0 <= nr < rows and 0 <= nc < cols','                    and matrix[nr][nc] > matrix[r][c]):','                res = max(res, 1 + dfs(nr, nc))','        memo[(r, c)] = res','        return res','    return max(dfs(r, c) for r in range(rows) for c in range(cols))'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'find median from data stream', pattern:'two heaps',
+        code:['import heapq','class MedianFinder:','    def __init__(self):','        self.small = []','        self.large = []','    def addNum(self, num):','        heapq.heappush(self.small, -num)','        if self.small and self.large and (-self.small[0] > self.large[0]):','            heapq.heappush(self.large, -heapq.heappop(self.small))','        if len(self.small) > len(self.large) + 1:','            heapq.heappush(self.large, -heapq.heappop(self.small))','        elif len(self.large) > len(self.small):','            heapq.heappush(self.small, -heapq.heappop(self.large))','    def findMedian(self):','        if len(self.small) > len(self.large):','            return -self.small[0]','        return (-self.small[0] + self.large[0]) / 2'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'edit distance', pattern:'dp',
+        code:['def minDistance(word1, word2):','    m, n = len(word1), len(word2)','    dp = [[0]*(n+1) for _ in range(m+1)]','    for i in range(m+1):','        dp[i][0] = i','    for j in range(n+1):','        dp[0][j] = j','    for i in range(1, m+1):','        for j in range(1, n+1):','            if word1[i-1] == word2[j-1]:','                dp[i][j] = dp[i-1][j-1]','            else:','                dp[i][j] = 1 + min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1])','    return dp[m][n]'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'alien dictionary', pattern:'topological sort',
+        code:['from collections import defaultdict, deque','def alienOrder(words):','    adj = {c: set() for w in words for c in w}','    for i in range(len(words) - 1):','        w1, w2 = words[i], words[i+1]','        minLen = min(len(w1), len(w2))','        if len(w1) > len(w2) and w1[:minLen] == w2[:minLen]:','            return \"\"','        for j in range(minLen):','            if w1[j] != w2[j]:','                adj[w1[j]].add(w2[j])','                break','    visited = {}','    res = []','    def dfs(c):','        if c in visited: return visited[c]','        visited[c] = True','        for nei in adj[c]:','            if dfs(nei): return True','        visited[c] = False','        res.append(c)','    for c in adj:','        if dfs(c): return \"\"','    return \"\".join(reversed(res))'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'count of smaller numbers after self', pattern:'merge sort',
+        code:['def countSmaller(nums):','    res = [0] * len(nums)','    enum = list(enumerate(nums))','    def merge_sort(arr):','        if len(arr) <= 1:','            return arr','        mid = len(arr) // 2','        left = merge_sort(arr[:mid])','        right = merge_sort(arr[mid:])','        merged = []','        j = 0','        for orig_i, val in left:','            while j < len(right) and right[j][1] < val:','                merged.append(right[j])','                j += 1','            res[orig_i] += j','            merged.append((orig_i, val))','        return merged + right[j:]','    merge_sort(enum)','    return res'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'new year and hurry', pattern:'math',
+        code:['n, k = map(int, input().split())','t = 0','i = 1','while t + i <= k and i <= n:','    t += i','    i += 1','print(n - i + 1)'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'road to 1600', pattern:'dp',
+        code:['n = int(input())','MOD = 10**9 + 7','dp = [0] * (n + 1)','dp[0] = 1','for i in range(1, n + 1):','    for d in range(1, i + 1):','        if i % d == 0:','            dp[i] = (dp[i] + dp[i - d]) % MOD','print(dp[n])'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'maximum sum of digits', pattern:'greedy',
+        code:['def digitSum(x):','    return sum(int(d) for d in str(x))','n = int(input())','ans = 0','x = 1','while x <= n:','    ans = max(ans, digitSum(x) + digitSum(n - x))','    x = x * 10','print(ans)'].join('\n'),
+      },
+    ],
+  },
+
+  /* ───────────────────────────────────────────────────────────
+     C++  (char literals = single quotes, string literals = double quotes)
+  ─────────────────────────────────────────────────────────── */
+  cpp: {
+    easy: [
+      {
+        source:'leetcode', problem:'two sum', pattern:'hash map',
+        code:['vector<int> twoSum(vector<int>& nums, int target) {','    unordered_map<int, int> seen;','    for (int i = 0; i < (int)nums.size(); i++) {','        int diff = target - nums[i];','        if (seen.count(diff))','            return {seen[diff], i};','        seen[nums[i]] = i;','    }','    return {};','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'valid parentheses', pattern:'stack',
+        code:["bool isValid(string s) {",'    stack<char> st;','    for (char ch : s) {',"        if (ch == '(' || ch == '[' || ch == '{')",'            st.push(ch);','        else {',"            if (st.empty()) return false;",'            char top = st.top(); st.pop();',"            if (ch == ')' && top != '(') return false;"+"            if (ch == ']' && top != '[') return false;"+"            if (ch == '}' && top != '{') return false;",'        }','    }','    return st.empty();','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'reverse linked list', pattern:'iteration',
+        code:['ListNode* reverseList(ListNode* head) {','    ListNode* prev = nullptr;','    ListNode* curr = head;','    while (curr) {','        ListNode* nxt = curr->next;','        curr->next = prev;','        prev = curr;','        curr = nxt;','    }','    return prev;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'climbing stairs', pattern:'dp',
+        code:['int climbStairs(int n) {','    if (n <= 2) return n;','    int a = 1, b = 2;','    for (int i = 3; i <= n; i++) {','        int c = a + b;','        a = b;','        b = c;','    }','    return b;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'best time to buy stock', pattern:'greedy',
+        code:['int maxProfit(vector<int>& prices) {','    int minPrice = INT_MAX, maxP = 0;','    for (int p : prices) {','        minPrice = min(minPrice, p);','        maxP = max(maxP, p - minPrice);','    }','    return maxP;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'invert binary tree', pattern:'recursion',
+        code:['TreeNode* invertTree(TreeNode* root) {','    if (!root) return nullptr;','    swap(root->left, root->right);','    invertTree(root->left);','    invertTree(root->right);','    return root;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'maximum depth of binary tree', pattern:'recursion',
+        code:['int maxDepth(TreeNode* root) {','    if (!root) return 0;','    return 1 + max(','        maxDepth(root->left),','        maxDepth(root->right)','    );','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'contains duplicate', pattern:'hash set',
+        code:['bool containsDuplicate(vector<int>& nums) {','    unordered_set<int> seen;','    for (int n : nums) {','        if (seen.count(n)) return true;','        seen.insert(n);','    }','    return false;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'missing number', pattern:'math',
+        code:['int missingNumber(vector<int>& nums) {','    int n = (int)nums.size();','    int expected = n * (n + 1) / 2;','    int actual = 0;','    for (int x : nums) actual += x;','    return expected - actual;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'single number', pattern:'bit manipulation',
+        code:['int singleNumber(vector<int>& nums) {','    int result = 0;','    for (int n : nums)','        result ^= n;','    return result;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'binary search', pattern:'binary search',
+        code:['int search(vector<int>& nums, int target) {','    int lo = 0, hi = (int)nums.size() - 1;','    while (lo <= hi) {','        int mid = lo + (hi - lo) / 2;','        if (nums[mid] == target) return mid;','        if (nums[mid] < target) lo = mid + 1;','        else hi = mid - 1;','    }','    return -1;','}'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'watermelon', pattern:'math',
+        code:['#include <bits/stdc++.h>','using namespace std;','int main() {','    int w;','    cin >> w;','    cout << (w > 2 && w % 2 == 0 ? "YES" : "NO");','    return 0;','}'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'way too long words', pattern:'string',
+        code:['#include <bits/stdc++.h>','using namespace std;','int main() {','    int n; cin >> n;','    while (n--) {','        string w; cin >> w;','        if ((int)w.size() > 10)','            cout << w[0] << w.size()-2 << w.back() << "\\n";','        else','            cout << w << "\\n";','    }','    return 0;','}'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'team olympiad', pattern:'math',
+        code:['#include <bits/stdc++.h>','using namespace std;','int main() {','    int n, p, m, c;','    cin >> n >> p >> m >> c;','    cout << min({p, m, c});','    return 0;','}'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'theatre square', pattern:'math',
+        code:['#include <bits/stdc++.h>','using namespace std;','int main() {','    long long n, m, a;','    cin >> n >> m >> a;','    long long rows = (n + a - 1) / a;','    long long cols = (m + a - 1) / a;','    cout << rows * cols;','    return 0;','}'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'helpful maths', pattern:'sorting',
+        code:['#include <bits/stdc++.h>','using namespace std;','int main() {','    string s; cin >> s;','    vector<int> digits;','    for (char c : s)','        if (c != \'+\') digits.push_back(c - \'0\');','    sort(digits.begin(), digits.end());','    for (int i = 0; i < (int)digits.size(); i++) {','        if (i) cout << \'+\';','        cout << digits[i];','    }','    return 0;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'palindrome number', pattern:'math',
+        code:['bool isPalindrome(int x) {','    if (x < 0) return false;','    string s = to_string(x);','    string r = s;','    reverse(r.begin(), r.end());','    return s == r;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'fibonacci number', pattern:'dp',
+        code:['int fib(int n) {','    if (n < 2) return n;','    int a = 0, b = 1;','    for (int i = 2; i <= n; i++) {','        int c = a + b;','        a = b;','        b = c;','    }','    return b;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'merge two sorted lists', pattern:'iteration',
+        code:['ListNode* mergeTwoLists(ListNode* l1, ListNode* l2) {','    ListNode dummy(0);','    ListNode* tail = &dummy;','    while (l1 && l2) {','        if (l1->val <= l2->val) {','            tail->next = l1; l1 = l1->next;','        } else {','            tail->next = l2; l2 = l2->next;','        }','        tail = tail->next;','    }','    tail->next = l1 ? l1 : l2;','    return dummy.next;','}'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'ultra fast mathematician', pattern:'xor',
+        code:['#include <bits/stdc++.h>','using namespace std;','int main() {','    int n; cin >> n;','    while (n--) {','        int a, b; cin >> a >> b;','        cout << (a ^ b) << "\\n";','    }','    return 0;','}'].join('\n'),
+      },
+    ],
+
+    medium: [
+      {
+        source:'leetcode', problem:'longest substring no repeat', pattern:'sliding window',
+        code:['int lengthOfLongestSubstring(string s) {','    unordered_map<char, int> seen;','    int left = 0, best = 0;','    for (int right = 0; right < (int)s.size(); right++) {','        char ch = s[right];','        if (seen.count(ch) && seen[ch] >= left)','            left = seen[ch] + 1;','        seen[ch] = right;','        best = max(best, right - left + 1);','    }','    return best;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'coin change', pattern:'dp',
+        code:['int coinChange(vector<int>& coins, int amount) {','    vector<int> dp(amount + 1, INT_MAX);','    dp[0] = 0;','    for (int coin : coins)','        for (int i = coin; i <= amount; i++)','            if (dp[i - coin] != INT_MAX)','                dp[i] = min(dp[i], dp[i - coin] + 1);','    return dp[amount] == INT_MAX ? -1 : dp[amount];','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'number of islands', pattern:'dfs',
+        code:["void dfs(vector<vector<char>>& g, int r, int c) {",'    if (r < 0 || c < 0 ||','        r >= (int)g.size() || c >= (int)g[0].size() ||',"        g[r][c] != '1') return;"+"    g[r][c] = '0';",'    dfs(g,r+1,c); dfs(g,r-1,c);','    dfs(g,r,c+1); dfs(g,r,c-1);','}','int numIslands(vector<vector<char>>& grid) {','    int count = 0;','    for (int r = 0; r < (int)grid.size(); r++)','        for (int c = 0; c < (int)grid[0].size(); c++)',"            if (grid[r][c] == '1') {",'                dfs(grid, r, c);','                count++;','            }','    return count;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'product of array except self', pattern:'prefix & suffix',
+        code:['vector<int> productExceptSelf(vector<int>& nums) {','    int n = (int)nums.size();','    vector<int> out(n, 1);','    int prefix = 1;','    for (int i = 0; i < n; i++) {','        out[i] = prefix;','        prefix *= nums[i];','    }','    int suffix = 1;','    for (int i = n - 1; i >= 0; i--) {','        out[i] *= suffix;','        suffix *= nums[i];','    }','    return out;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'top k frequent elements', pattern:'min-heap',
+        code:['vector<int> topKFrequent(vector<int>& nums, int k) {','    unordered_map<int, int> freq;','    for (int n : nums) freq[n]++;','    using P = pair<int,int>;','    priority_queue<P, vector<P>, greater<P>> minH;','    for (auto& [val, cnt] : freq) {','        minH.push({cnt, val});','        if ((int)minH.size() > k) minH.pop();','    }','    vector<int> res;','    while (!minH.empty()) {','        res.push_back(minH.top().second);','        minH.pop();','    }','    return res;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'find minimum in rotated array', pattern:'binary search',
+        code:['int findMin(vector<int>& nums) {','    int lo = 0, hi = (int)nums.size() - 1;','    while (lo < hi) {','        int mid = lo + (hi - lo) / 2;','        if (nums[mid] > nums[hi])','            lo = mid + 1;','        else','            hi = mid;','    }','    return nums[lo];','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'container with most water', pattern:'two pointers',
+        code:['int maxArea(vector<int>& h) {','    int left = 0, right = (int)h.size() - 1, best = 0;','    while (left < right) {','        best = max(best,','            min(h[left], h[right]) * (right - left));','        if (h[left] < h[right]) left++;','        else right--;','    }','    return best;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'search in rotated sorted array', pattern:'binary search',
+        code:['int search(vector<int>& nums, int target) {','    int lo = 0, hi = (int)nums.size() - 1;','    while (lo <= hi) {','        int mid = lo + (hi - lo) / 2;','        if (nums[mid] == target) return mid;','        if (nums[lo] <= nums[mid]) {','            if (nums[lo] <= target && target < nums[mid])','                hi = mid - 1;','            else lo = mid + 1;','        } else {','            if (nums[mid] < target && target <= nums[hi])','                lo = mid + 1;','            else hi = mid - 1;','        }','    }','    return -1;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'longest consecutive sequence', pattern:'hash set',
+        code:['int longestConsecutive(vector<int>& nums) {','    unordered_set<int> s(nums.begin(), nums.end());','    int best = 0;','    for (int n : s) {','        if (!s.count(n - 1)) {','            int curr = n, length = 1;','            while (s.count(curr + 1)) {','                curr++; length++;','            }','            best = max(best, length);','        }','    }','    return best;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'decode ways', pattern:'dp',
+        code:['int numDecodings(string s) {','    if (s[0] == \'0\') return 0;','    int n = (int)s.size();','    vector<int> dp(n + 1, 0);','    dp[0] = dp[1] = 1;','    for (int i = 2; i <= n; i++) {','        if (s[i-1] != \'0\') dp[i] += dp[i-1];','        int two = stoi(s.substr(i-2, 2));','        if (two >= 10 && two <= 26) dp[i] += dp[i-2];','    }','    return dp[n];','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'word search', pattern:'backtracking',
+        code:['bool dfs(vector<vector<char>>& b, string& w, int r, int c, int i) {','    if (i == (int)w.size()) return true;','    if (r < 0 || c < 0 || r >= (int)b.size() ||','        c >= (int)b[0].size() || b[r][c] != w[i]) return false;','    char tmp = b[r][c];','    b[r][c] = \'#\';','    bool found = dfs(b,w,r+1,c,i+1) || dfs(b,w,r-1,c,i+1)','              || dfs(b,w,r,c+1,i+1) || dfs(b,w,r,c-1,i+1);','    b[r][c] = tmp;','    return found;','}','bool exist(vector<vector<char>>& board, string word) {','    for (int r = 0; r < (int)board.size(); r++)','        for (int c = 0; c < (int)board[0].size(); c++)','            if (dfs(board, word, r, c, 0)) return true;','    return false;','}'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'next round', pattern:'simulation',
+        code:['#include <bits/stdc++.h>','using namespace std;','int main() {','    int n, k; cin >> n >> k;','    vector<int> a(n);','    for (int& x : a) cin >> x;','    int thr = a[k-1];','    int ans = 0;','    for (int x : a)','        if (x >= thr && x > 0) ans++;','    cout << ans;','    return 0;','}'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'pangram', pattern:'string',
+        code:['#include <bits/stdc++.h>','using namespace std;','int main() {','    int n; cin >> n;','    string s; cin >> s;','    set<char> seen;','    for (char c : s) seen.insert(tolower(c));','    cout << (seen.size() == 26 ? "YES" : "NO");','    return 0;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'combination sum', pattern:'backtracking',
+        code:['void dfs(vector<int>& c, int target, int i,','         vector<int>& cur, vector<vector<int>>& res) {','    if (target == 0) { res.push_back(cur); return; }','    if (i >= (int)c.size() || target < 0) return;','    cur.push_back(c[i]);','    dfs(c, target - c[i], i, cur, res);','    cur.pop_back();','    dfs(c, target, i + 1, cur, res);','}','vector<vector<int>> combinationSum(vector<int>& candidates, int target) {','    vector<vector<int>> res;','    vector<int> cur;','    dfs(candidates, target, 0, cur, res);','    return res;','}'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'polycarp likes strings', pattern:'string',
+        code:['#include <bits/stdc++.h>','using namespace std;','int main() {','    string s; cin >> s;','    int count = 0;','    int i = 0;','    while (i < (int)s.size()) {','        int j = i;','        while (j < (int)s.size() && s[j] == s[i]) j++;','        if (j - i >= 2) count++;','        i = j;','    }','    cout << count;','    return 0;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'max product subarray', pattern:'dp',
+        code:['int maxProduct(vector<int>& nums) {','    int res = *max_element(nums.begin(), nums.end());','    int curMin = 1, curMax = 1;','    for (int n : nums) {','        if (n == 0) { curMin = curMax = 1; continue; }','        int tmp = curMax * n;','        curMax = max({n, tmp, curMin * n});','        curMin = min({n, tmp, curMin * n});','        res = max(res, curMax);','    }','    return res;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'reorder list', pattern:'linked list',
+        code:['void reorderList(ListNode* head) {','    ListNode *slow = head, *fast = head;','    while (fast && fast->next) {','        slow = slow->next;','        fast = fast->next->next;','    }','    ListNode *prev = nullptr, *curr = slow->next;','    slow->next = nullptr;','    while (curr) {','        ListNode* nxt = curr->next;','        curr->next = prev;','        prev = curr; curr = nxt;','    }','    ListNode *first = head, *second = prev;','    while (second) {','        ListNode *t1 = first->next, *t2 = second->next;','        first->next = second;','        second->next = t1;','        first = t1; second = t2;','    }','}'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'sereja and suffixes', pattern:'suffix max',
+        code:['#include <bits/stdc++.h>','using namespace std;','int main() {','    int n; cin >> n;','    vector<int> a(n);','    for (int& x : a) cin >> x;','    vector<int> suf(n);','    suf[n-1] = a[n-1];','    for (int i = n-2; i >= 0; i--)','        suf[i] = max(suf[i+1], a[i]);','    int q; cin >> q;','    while (q--) {','        int i; cin >> i; i--;','        cout << suf[i] << "\\n";','    }','    return 0;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'course schedule', pattern:'topological sort',
+        code:['bool canFinish(int n, vector<vector<int>>& prereq) {','    vector<vector<int>> adj(n);','    for (auto& p : prereq) adj[p[1]].push_back(p[0]);','    vector<int> state(n, 0);','    function<bool(int)> dfs = [&](int u) -> bool {','        if (state[u] == 1) return false;','        if (state[u] == 2) return true;','        state[u] = 1;','        for (int v : adj[u])','            if (!dfs(v)) return false;','        state[u] = 2;','        return true;','    };','    for (int i = 0; i < n; i++)','        if (!dfs(i)) return false;','    return true;','}'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'nearly lucky number', pattern:'string',
+        code:['#include <bits/stdc++.h>','using namespace std;','int main() {','    string n; cin >> n;','    int lucky = 0;','    for (char c : n)','        if (c == \'4\' || c == \'7\') lucky++;','    string s = to_string(lucky);','    bool ok = true;','    for (char c : s)','        if (c != \'4\' && c != \'7\') { ok = false; break; }','    cout << (ok ? "YES" : "NO");','    return 0;','}'].join('\n'),
+      },
+    ],
+
+    hard: [
+      {
+        source:'leetcode', problem:'trapping rain water', pattern:'two pointers',
+        code:['int trap(vector<int>& height) {','    int left = 0, right = (int)height.size() - 1;','    int lMax = 0, rMax = 0, water = 0;','    while (left < right) {','        if (height[left] < height[right]) {','            if (height[left] >= lMax)','                lMax = height[left];','            else','                water += lMax - height[left];','            left++;','        } else {','            if (height[right] >= rMax)','                rMax = height[right];','            else','                water += rMax - height[right];','            right--;','        }','    }','    return water;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'merge k sorted lists', pattern:'min-heap',
+        code:['ListNode* mergeKLists(vector<ListNode*>& lists) {','    auto cmp = [](ListNode* a, ListNode* b) {','        return a->val > b->val;','    };','    priority_queue<ListNode*,','        vector<ListNode*>, decltype(cmp)> pq(cmp);','    for (ListNode* l : lists)','        if (l) pq.push(l);','    ListNode dummy(0);','    ListNode* tail = &dummy;','    while (!pq.empty()) {','        tail->next = pq.top(); pq.pop();','        tail = tail->next;','        if (tail->next) pq.push(tail->next);','    }','    return dummy.next;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'minimum window substring', pattern:'sliding window',
+        code:['string minWindow(string s, string t) {','    unordered_map<char, int> need, win;','    for (char c : t) need[c]++;','    int formed = 0, required = (int)need.size();','    int left = 0, bestLen = INT_MAX, bestL = 0;','    for (int right = 0; right < (int)s.size(); right++) {','        char c = s[right];','        win[c]++;','        if (need.count(c) && win[c] == need[c]) formed++;','        while (formed == required) {','            if (right - left + 1 < bestLen) {','                bestLen = right - left + 1;','                bestL = left;','            }','            char lc = s[left++];','            win[lc]--;','            if (need.count(lc) && win[lc] < need[lc]) formed--;','        }','    }','    return bestLen == INT_MAX ? "" : s.substr(bestL, bestLen);','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'binary tree maximum path sum', pattern:'dfs',
+        code:['int res;','int dfs(TreeNode* node) {','    if (!node) return 0;','    int left  = max(dfs(node->left), 0);','    int right = max(dfs(node->right), 0);','    res = max(res, node->val + left + right);','    return node->val + max(left, right);','}','int maxPathSum(TreeNode* root) {','    res = INT_MIN;','    dfs(root);','    return res;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'longest valid parentheses', pattern:'stack',
+        code:['int longestValidParentheses(string s) {','    stack<int> st;','    st.push(-1);','    int best = 0;','    for (int i = 0; i < (int)s.size(); i++) {',"        if (s[i] == '(') {",'            st.push(i);','        } else {','            st.pop();','            if (st.empty()) st.push(i);','            else best = max(best, i - st.top());','        }','    }','    return best;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'sliding window maximum', pattern:'deque',
+        code:['vector<int> maxSlidingWindow(vector<int>& nums, int k) {','    deque<int> dq;','    vector<int> res;','    for (int i = 0; i < (int)nums.size(); i++) {','        while (!dq.empty() && nums[dq.back()] < nums[i])','            dq.pop_back();','        dq.push_back(i);','        if (dq.front() == i - k) dq.pop_front();','        if (i >= k - 1) res.push_back(nums[dq.front()]);','    }','    return res;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'largest rectangle in histogram', pattern:'stack',
+        code:['int largestRectangleArea(vector<int>& heights) {','    stack<int> st;','    int maxArea = 0, n = (int)heights.size();','    for (int i = 0; i <= n; i++) {','        int h = (i == n) ? 0 : heights[i];','        while (!st.empty() && heights[st.top()] > h) {','            int height = heights[st.top()]; st.pop();','            int width = st.empty() ? i : i - st.top() - 1;','            maxArea = max(maxArea, height * width);','        }','        st.push(i);','    }','    return maxArea;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'regular expression matching', pattern:'dp',
+        code:['bool isMatch(string s, string p) {','    int m = s.size(), n = p.size();','    vector<vector<bool>> dp(m+1, vector<bool>(n+1, false));','    dp[0][0] = true;','    for (int j = 1; j <= n; j++)','        if (p[j-1] == \'*\') dp[0][j] = dp[0][j-2];','    for (int i = 1; i <= m; i++) {','        for (int j = 1; j <= n; j++) {','            if (p[j-1] == \'*\') {','                dp[i][j] = dp[i][j-2];','                if (p[j-2] == \'.\' || p[j-2] == s[i-1])','                    dp[i][j] = dp[i][j] || dp[i-1][j];','            } else if (p[j-1] == \'.\' || p[j-1] == s[i-1]) {','                dp[i][j] = dp[i-1][j-1];','            }','        }','    }','    return dp[m][n];','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'n queens', pattern:'backtracking',
+        code:['vector<vector<string>> res;','void solve(int n, int row, vector<string>& board,','           set<int>& cols, set<int>& pos, set<int>& neg) {','    if (row == n) { res.push_back(board); return; }','    for (int c = 0; c < n; c++) {','        if (cols.count(c) || pos.count(row+c) || neg.count(row-c))','            continue;','        board[row][c] = \'Q\';','        cols.insert(c); pos.insert(row+c); neg.insert(row-c);','        solve(n, row+1, board, cols, pos, neg);','        board[row][c] = \'.\';','        cols.erase(c); pos.erase(row+c); neg.erase(row-c);','    }','}','vector<vector<string>> solveNQueens(int n) {','    vector<string> board(n, string(n, \'.\'));','    set<int> cols, pos, neg;','    solve(n, 0, board, cols, pos, neg);','    return res;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'edit distance', pattern:'dp',
+        code:['int minDistance(string w1, string w2) {','    int m = w1.size(), n = w2.size();','    vector<vector<int>> dp(m+1, vector<int>(n+1, 0));','    for (int i = 0; i <= m; i++) dp[i][0] = i;','    for (int j = 0; j <= n; j++) dp[0][j] = j;','    for (int i = 1; i <= m; i++) {','        for (int j = 1; j <= n; j++) {','            if (w1[i-1] == w2[j-1])','                dp[i][j] = dp[i-1][j-1];','            else','                dp[i][j] = 1 + min({dp[i-1][j], dp[i][j-1], dp[i-1][j-1]});','        }','    }','    return dp[m][n];','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'burst balloons', pattern:'interval dp',
+        code:['int maxCoins(vector<int>& nums) {','    nums.insert(nums.begin(), 1);','    nums.push_back(1);','    int n = (int)nums.size();','    vector<vector<int>> dp(n, vector<int>(n, 0));','    for (int len = 2; len < n; len++) {','        for (int left = 0; left < n - len; left++) {','            int right = left + len;','            for (int k = left+1; k < right; k++) {','                dp[left][right] = max(dp[left][right],','                    dp[left][k] + dp[k][right] +','                    nums[left]*nums[k]*nums[right]);','            }','        }','    }','    return dp[0][n-1];','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'longest increasing path in matrix', pattern:'dfs + memo',
+        code:['int rows, cols;','int dfs(vector<vector<int>>& m, vector<vector<int>>& memo, int r, int c) {','    if (memo[r][c]) return memo[r][c];','    int res = 1;','    int dirs[4][2] = {{1,0},{-1,0},{0,1},{0,-1}};','    for (auto& d : dirs) {','        int nr = r + d[0], nc = c + d[1];','        if (nr >= 0 && nc >= 0 && nr < rows && nc < cols','                && m[nr][nc] > m[r][c])','            res = max(res, 1 + dfs(m, memo, nr, nc));','    }','    return memo[r][c] = res;','}','int longestIncreasingPath(vector<vector<int>>& matrix) {','    rows = matrix.size(); cols = matrix[0].size();','    vector<vector<int>> memo(rows, vector<int>(cols, 0));','    int ans = 0;','    for (int r = 0; r < rows; r++)','        for (int c = 0; c < cols; c++)','            ans = max(ans, dfs(matrix, memo, r, c));','    return ans;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'median of two sorted arrays', pattern:'binary search',
+        code:['double findMedianSortedArrays(vector<int>& A, vector<int>& B) {','    if (A.size() > B.size()) swap(A, B);','    int m = A.size(), n = B.size();','    int lo = 0, hi = m;','    while (lo <= hi) {','        int i = (lo + hi) / 2;','        int j = (m + n + 1) / 2 - i;','        int maxA = (i == 0) ? INT_MIN : A[i-1];','        int minA = (i == m) ? INT_MAX : A[i];','        int maxB = (j == 0) ? INT_MIN : B[j-1];','        int minB = (j == n) ? INT_MAX : B[j];','        if (maxA <= minB && maxB <= minA) {','            if ((m + n) % 2) return max(maxA, maxB);','            return (max(maxA,maxB) + min(minA,minB)) / 2.0;','        } else if (maxA > minB) hi = i - 1;','        else lo = i + 1;','    }','    return 0.0;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'count of smaller numbers after self', pattern:'merge sort',
+        code:['vector<int> res;','void mergeSort(vector<pair<int,int>>& arr, int l, int r) {','    if (l >= r) return;','    int mid = (l + r) / 2;','    mergeSort(arr, l, mid);','    mergeSort(arr, mid+1, r);','    vector<pair<int,int>> tmp;','    int j = mid + 1;','    for (int i = l; i <= mid; i++) {','        while (j <= r && arr[j].first < arr[i].first)','            tmp.push_back(arr[j++]);','        res[arr[i].second] += j - mid - 1;','        tmp.push_back(arr[i]);','    }','    while (j <= r) tmp.push_back(arr[j++]);','    for (int i = l; i <= r; i++) arr[i] = tmp[i-l];','}','vector<int> countSmaller(vector<int>& nums) {','    res.assign(nums.size(), 0);','    vector<pair<int,int>> arr;','    for (int i = 0; i < (int)nums.size(); i++)','        arr.push_back({nums[i], i});','    mergeSort(arr, 0, (int)arr.size()-1);','    return res;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'find median from data stream', pattern:'two heaps',
+        code:['priority_queue<int> small;','priority_queue<int, vector<int>, greater<int>> large;','void addNum(int num) {','    small.push(num);','    if (!large.empty() && small.top() > large.top()) {','        large.push(small.top()); small.pop();','    }','    if (small.size() > large.size() + 1) {','        large.push(small.top()); small.pop();','    } else if (large.size() > small.size()) {','        small.push(large.top()); large.pop();','    }','}','double findMedian() {','    if (small.size() > large.size()) return small.top();','    return (small.top() + large.top()) / 2.0;','}'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'road to 1600', pattern:'dp',
+        code:['#include <bits/stdc++.h>','using namespace std;','const int MOD = 1e9 + 7;','int main() {','    int n; cin >> n;','    vector<long long> dp(n + 1, 0);','    dp[0] = 1;','    for (int i = 1; i <= n; i++)','        for (int d = 1; d <= i; d++)','            if (i % d == 0)','                dp[i] = (dp[i] + dp[i - d]) % MOD;','    cout << dp[n];','    return 0;','}'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'sum in the tree', pattern:'greedy bfs',
+        code:['#include <bits/stdc++.h>','using namespace std;','int main() {','    int n; cin >> n;','    vector<int> a(n+1), parent(n+1, 0);','    for (int i = 2; i <= n; i++) cin >> parent[i];','    for (int i = 1; i <= n; i++) cin >> a[i];','    vector<vector<int>> ch(n+1);','    for (int i = 2; i <= n; i++) ch[parent[i]].push_back(i);','    vector<int> val(n+1, 0);','    val[1] = a[1];','    long long total = val[1];','    queue<int> q; q.push(1);','    while (!q.empty()) {','        int u = q.front(); q.pop();','        for (int v : ch[u]) {','            val[v] = ch[v].empty() ? val[u]/2 : a[v];','            total += val[v];','            q.push(v);','        }','    }','    cout << total;','    return 0;','}'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'maximum sum of digits', pattern:'greedy',
+        code:['#include <bits/stdc++.h>','using namespace std;','int digitSum(long long x) {','    int s = 0;','    while (x > 0) { s += x % 10; x /= 10; }','    return s;','}','int main() {','    long long n; cin >> n;','    int ans = 0;','    for (long long x = 1; x <= n; x *= 10)','        ans = max(ans, digitSum(x) + digitSum(n - x));','    cout << ans;','    return 0;','}'].join('\n'),
+      },
+      {
+        source:'codeforces', problem:'new year and hurry', pattern:'math',
+        code:['#include <bits/stdc++.h>','using namespace std;','int main() {','    int n, k; cin >> n >> k;','    int t = 0, i = 1;','    while (t + i <= k && i <= n) {','        t += i; i++;','    }','    cout << n - i + 1;','    return 0;','}'].join('\n'),
+      },
+      {
+        source:'leetcode', problem:'word break', pattern:'dp',
+        code:['bool wordBreak(string s, vector<string>& wordDict) {','    unordered_set<string> ws(wordDict.begin(), wordDict.end());','    int n = (int)s.size();','    vector<bool> dp(n + 1, false);','    dp[0] = true;','    for (int i = 1; i <= n; i++) {','        for (int j = 0; j < i; j++) {','            if (dp[j] && ws.count(s.substr(j, i - j))) {','                dp[i] = true;','                break;','            }','        }','    }','    return dp[n];','}'].join('\n'),
+      },
+    ],
+  },
+};
+
+/* ── DOM refs ── */
+const dom = {
+  display:  document.getElementById('snippet-display'),
+  input:    document.getElementById('hidden-input'),
+  hint:     document.getElementById('hint'),
+  fill:     document.getElementById('progress-fill'),
+  svWpm:    document.getElementById('sv-wpm'),
+  svAcc:    document.getElementById('sv-acc'),
+  svTime:   document.getElementById('sv-time'),
+  svErr:    document.getElementById('sv-err'),
+  metaSrc:  document.getElementById('meta-source'),
+  metaProb: document.getElementById('meta-problem'),
+  metaPat:  document.getElementById('meta-pattern'),
+  navBest:  document.getElementById('nav-best'),
+  navRuns:  document.getElementById('nav-runs'),
+  history:  document.getElementById('history-entries'),
+  modal:    document.getElementById('modal'),
+  mWpm:     document.getElementById('m-wpm'),
+  mAcc:     document.getElementById('m-acc'),
+  mTime:    document.getElementById('m-time'),
+  mErr:     document.getElementById('m-err'),
+  keyboard: document.getElementById('keyboard'),
+  kbdToggle:document.getElementById('kbd-toggle'),
+};
+
+/* ── State ── */
+const S = {
+  lang: 'python', diff: 'easy',
+  chars: [], typed: [],
+  idx: 0,
+  started: false, finished: false,
+  startTime: 0, elapsed: 0,
+  timerHandle: null,
+  timeLimit: 60, // Easy: 60s
+  errors: 0, totalTyped: 0,
+  burstCorrect: 0,
+  charTimestamps: [], // Track when each character was typed
+  wpmTimeline: [], // WPM calculated at intervals
+  history: (() => { try { return JSON.parse(localStorage.getItem('codetype_history')) || []; } catch(e) { return []; } })(),
+  bestWpm: parseInt(localStorage.getItem('codetype_best_wpm')) || 0,
+  runs: parseInt(localStorage.getItem('codetype_runs')) || 0,
+  kbdVisible: false, // Hidden by default, toggle to show
+};
+
+/* ── Snippet helpers ── */
+function getList() {
+  const lang = DB[S.lang] || DB.python;
+  return lang[S.diff] || lang.easy;
+}
+
+function load(idx, animate, keepTimer = false) {
+  if (!keepTimer) stopTimer();
+  const list = getList();
+  idx = ((idx % list.length) + list.length) % list.length;
+  const s = list[idx];
+
+  S.chars   = Array.from(s.code.replace(/\t/g, '    ')); // Normalize tabs to 4 spaces
+  S.typed   = [];
+  S.idx     = idx;
+  S.finished = false;
+
+  if (!keepTimer) {
+    S.started   = false;
+    S.startTime = S.elapsed = S.errors = S.totalTyped = S.burstCorrect = 0;
+    S.charTimestamps = [];
+    S.wpmTimeline = [];
+  }
+
+  if (animate) {
+    dom.display.classList.add('fade-out');
+    setTimeout(() => {
+      dom.metaSrc.textContent  = s.source;
+      dom.metaProb.textContent = s.problem;
+      dom.metaPat.textContent  = s.pattern;
+      if (!keepTimer) dom.hint.classList.remove('hidden');
+      render();
+      if (!keepTimer) setStats(0, 100, S.timeLimit, 0);
+      dom.fill.style.width = '0%';
+      dom.display.classList.remove('fade-out');
+      dom.display.classList.add('fade-in');
+      setTimeout(() => dom.display.classList.remove('fade-in'), 300);
+      updateKeyboard();
+    }, 180);
+  } else {
+    dom.metaSrc.textContent  = s.source;
+    dom.metaProb.textContent = s.problem;
+    dom.metaPat.textContent  = s.pattern;
+    if (!keepTimer) dom.hint.classList.remove('hidden');
+    render();
+    if (!keepTimer) setStats(0, 100, S.timeLimit, 0);
+    dom.fill.style.width = '0%';
+    updateKeyboard();
+  }
+}
+
+/* ── Render ── */
+function render() {
+  const frag = document.createDocumentFragment();
+  const tl = S.typed.length;
+  const tot = S.chars.length;
+  for (let i = 0; i < tot; i++) {
+    const ch = S.chars[i];
+    const span = document.createElement('span');
+    span.className = 'ch ' + (
+      i < tl  ? (S.typed[i] === ch ? 'correct' : 'wrong') :
+      i === tl ? 'active' : 'pending'
+    );
+    if (ch === '\n') {
+      span.textContent = '\u21B5';
+      frag.appendChild(span);
+      frag.appendChild(document.createTextNode('\n'));
+    } else {
+      span.textContent = ch;
+      frag.appendChild(span);
+    }
+  }
+  dom.display.textContent = '';
+  dom.display.appendChild(frag);
+}
+
+/* ── Shake on wrong keypress ── */
+function triggerShake() {
+  dom.display.classList.remove('shake');
+  void dom.display.offsetWidth;
+  dom.display.classList.add('shake');
+}
+dom.display.addEventListener('animationend', e => {
+  if (e.animationName === 'displayShake') dom.display.classList.remove('shake');
+});
+
+/* ── Stats ── */
+function calcWpm() {
+  if (S.elapsed < 0.5) return 0;
+  let correct = S.burstCorrect;
+  for (let i = 0; i < S.typed.length; i++)
+    if (S.typed[i] === S.chars[i]) correct++;
+  return Math.round((correct / 5) / (S.elapsed / 60));
+}
+function calcAcc() {
+  if (!S.totalTyped) return 100;
+  return Math.max(0, Math.round(((S.totalTyped - S.errors) / S.totalTyped) * 100));
+}
+function popStat(el) {
+  el.classList.remove('pop');
+  void el.offsetWidth;
+  el.classList.add('pop');
+}
+function setStats(wpm, acc, time, err) {
+  if (dom.svWpm.textContent !== String(wpm))  { dom.svWpm.textContent = wpm;  popStat(dom.svWpm); }
+  if (dom.svAcc.textContent !== String(acc))  { dom.svAcc.textContent = acc;  popStat(dom.svAcc); }
+  if (dom.svTime.textContent !== String(time)){ dom.svTime.textContent = time; popStat(dom.svTime); }
+  if (dom.svErr.textContent !== String(err))  { dom.svErr.textContent = err;  popStat(dom.svErr); }
+}
+
+/* ── Timer ── */
+function startTimer() {
+  S.timerHandle = setInterval(() => {
+    if (!S.started || S.finished) return;
+    S.elapsed = (Date.now() - S.startTime) / 1000;
+    
+    // Check time limit
+    if (S.timeLimit > 0 && S.elapsed >= S.timeLimit) {
+      finish();
+      return;
+    }
+    
+    // Display countdown if time limit exists, otherwise display elapsed
+    let timeDisplay;
+    if (S.timeLimit > 0) {
+      timeDisplay = Math.ceil(Math.max(0, S.timeLimit - S.elapsed));
+    } else {
+      timeDisplay = Math.floor(S.elapsed);
+    }
+    
+    setStats(calcWpm(), calcAcc(), timeDisplay, S.errors);
+  }, 150);
+}
+function stopTimer() {
+  clearInterval(S.timerHandle);
+  S.timerHandle = null;
+}
+
+/* ── Focus ── */
+function focusInput() { dom.input.focus({ preventScroll: true }); }
+
+/* ── Input ── */
+dom.input.addEventListener('keydown', e => {
+  if (S.finished) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if      (e.key === 'Tab')       { e.preventDefault(); typeChar('    '); }
+  else if (e.key === 'Enter')     { e.preventDefault(); typeChar('\n'); }
+  else if (e.key === 'Backspace') { e.preventDefault(); doBackspace();  }
+  else if (e.key === 'Escape')    { e.preventDefault(); load(S.idx, true); focusInput(); }
+  else if (e.key.length === 1)    { typeChar(e.key); }
+  if (S.kbdVisible) flashKey(e.key);
+});
+
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (S.finished && dom.modal.classList.contains('show')) return;
+  if (document.activeElement !== dom.input) focusInput();
+});
+
+function typeChar(ch) {
+  if (S.typed.length >= S.chars.length) return;
+  if (!S.started) {
+    S.started   = true;
+    S.startTime = Date.now();
+    dom.hint.classList.add('hidden');
+    startTimer();
+  }
+  // Handle multi-character input (like '    ' for Tab)
+  if (ch.length > 1) {
+    let hadError = false;
+    for (let i = 0; i < ch.length; i++) {
+      if (S.typed.length >= S.chars.length) break; // break so finish() still runs below
+      const isCorrect = ch[i] === S.chars[S.typed.length];
+      if (!isCorrect) { S.errors++; hadError = true; }
+      else { playSound('correct'); }
+      S.totalTyped++;
+      S.typed.push(ch[i]);
+      S.charTimestamps.push(Date.now() - S.startTime);
+    }
+    if (hadError) { triggerShake(); playSound('wrong'); }
+  } else {
+    const isCorrect = ch === S.chars[S.typed.length];
+    if (!isCorrect) { S.errors++; triggerShake(); playSound('wrong'); }
+    else { playSound('correct'); }
+    S.totalTyped++;
+    S.typed.push(ch);
+    S.charTimestamps.push(Date.now() - S.startTime);
+  }
+  render();
+  dom.fill.style.width = (S.typed.length / S.chars.length * 100).toFixed(1) + '%';
+  if (S.typed.length === S.chars.length) {
+    if (S.timeLimit === 0) {
+      // Infinity mode: accumulate correct chars and auto-advance to next snippet
+      for (let i = 0; i < S.typed.length; i++)
+        if (S.typed[i] === S.chars[i]) S.burstCorrect++;
+      const list = getList();
+      let next;
+      do { next = Math.floor(Math.random() * list.length); }
+      while (list.length > 1 && next === S.idx);
+      load(next, true, true); // keepTimer=true
+    } else {
+      // Time-limited mode: show results modal
+      finish();
+    }
+  }
+  updateKeyboard();
+}
+
+function doBackspace() {
+  if (!S.typed.length) return;
+  S.typed.pop();
+  render();
+  dom.fill.style.width = (S.typed.length / S.chars.length * 100).toFixed(1) + '%';
+  updateKeyboard();
+}
+
+/* ── Sound ── */
+/* ── Loading Screen ── */
+function hideLoadingScreen() {
+  const loader = document.getElementById('loading-screen');
+  if (loader) loader.classList.add('hidden');
+}
+
+let soundEnabled = localStorage.getItem('codetype_sound') !== 'false';
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  localStorage.setItem('codetype_sound', soundEnabled);
+  const btn = document.getElementById('sound-toggle');
+  btn.classList.toggle('enabled', soundEnabled);
+  if (soundEnabled) {
+    playSound('toggle');
+  }
+}
+let _audioCtx = null;
+function getAudioCtx() {
+  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return _audioCtx;
+}
+function playSound(type) {
+  if (!soundEnabled) return;
+  const audioContext = getAudioCtx();
+  const now = audioContext.currentTime;
+  const osc = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+  osc.connect(gain);
+  gain.connect(audioContext.destination);
+  
+  if (type === 'correct') {
+    osc.frequency.setValueAtTime(800, now);
+    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+    osc.start(now);
+    osc.stop(now + 0.1);
+  } else if (type === 'wrong') {
+    osc.frequency.setValueAtTime(200, now);
+    osc.frequency.exponentialRampToValueAtTime(100, now + 0.15);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+    osc.start(now);
+    osc.stop(now + 0.15);
+  } else if (type === 'celebrate') {
+    const freqs = [523, 659, 784];
+    for (let i = 0; i < freqs.length; i++) {
+      const o = audioContext.createOscillator();
+      const g = audioContext.createGain();
+      o.connect(g);
+      g.connect(audioContext.destination);
+      o.frequency.setValueAtTime(freqs[i], now + i * 0.1);
+      g.gain.setValueAtTime(0.3, now + i * 0.1);
+      g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.2);
+      o.start(now + i * 0.1);
+      o.stop(now + i * 0.1 + 0.2);
+    }
+  } else if (type === 'toggle') {
+    osc.frequency.setValueAtTime(1000, now);
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+    osc.start(now);
+    osc.stop(now + 0.05);
+  }
+}
+
+/* ── Confetti ── */
+function createConfetti(wpmValue) {
+  const container = document.getElementById('confetti-container');
+  container.innerHTML = '';
+  const colors = ['#4ade80', '#f87171', '#a78bfa', '#fbbf24'];
+  const count = 50;
+  
+  for (let i = 0; i < count; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const tx = (Math.random() - 0.5) * 100;
+    piece.style.setProperty('--color', color);
+    piece.style.setProperty('--tx', tx + 'vw');
+    piece.style.left = (Math.random() * 100) + '%';
+    const delay = Math.random() * 0.3;
+    piece.style.setProperty('--delay', delay + 's');
+    container.appendChild(piece);
+  }
+  
+  // Auto-clear after animation
+  setTimeout(() => {
+    container.innerHTML = '';
+  }, 3000);
+}
+
+/* ── Finish ── */
+function calculateWpmTimeline() {
+  // Calculate WPM at 5-second intervals for time-based and at char milestones for infinity
+  const timeline = [];
+  const interval = 5000; // 5 seconds
+  
+  for (let timeMs = interval; timeMs <= S.elapsed * 1000; timeMs += interval) {
+    // Find how many characters were typed by this time
+    let charCount = 0;
+    for (let i = 0; i < S.charTimestamps.length; i++) {
+      if (S.charTimestamps[i] <= timeMs) charCount++;
+      else break;
+    }
+    if (charCount > 0) {
+      const words = charCount / 5;
+      const minutes = (timeMs / 1000) / 60;
+      const wpm = Math.round(words / minutes);
+      timeline.push({ time: Math.round(timeMs / 1000), wpm });
+    }
+  }
+  
+  return timeline;
+}
+
+function finish() {
+  S.finished = true;
+  stopTimer();
+  // If time-limited and timer expired, cap elapsed at the limit for accurate stats
+  S.elapsed = S.timeLimit > 0
+    ? Math.min((Date.now() - S.startTime) / 1000, S.timeLimit)
+    : (Date.now() - S.startTime) / 1000;
+  const wpm = calcWpm(), acc = calcAcc();
+  const wpmTimeline = calculateWpmTimeline();
+  S.runs++;
+  if (wpm > S.bestWpm) { S.bestWpm = wpm; dom.navBest.textContent = wpm; }
+  dom.navRuns.textContent = S.runs;
+  S.history.unshift({ wpm, acc, lang: S.lang, diff: S.diff, ts: Date.now(), wpmTimeline });
+  if (S.history.length > 50) S.history.length = 50; // Keep more history for analytics
+  localStorage.setItem('codetype_history', JSON.stringify(S.history));
+  localStorage.setItem('codetype_best_wpm', S.bestWpm);
+  localStorage.setItem('codetype_runs', S.runs);
+  // Notify dashboard in the same tab (storage events don't fire same-tab natively)
+  window.dispatchEvent(new StorageEvent('storage', { key: 'codetype_history' }));
+  renderHistory();
+  animateWpm(wpm);
+  dom.mAcc.textContent  = acc + '%';
+  dom.mTime.textContent = Math.round(S.elapsed) + 's';
+  dom.mErr.textContent  = S.errors;
+  dom.modal.classList.add('show');
+  
+  // Trigger confetti for high WPM
+  if (wpm >= 100) {
+    createConfetti(wpm);
+    playSound('celebrate');
+  }
+  
+  // Trigger celebration animation for perfect accuracy
+  if (acc === 100) {
+    dom.modal.classList.add('celebrate');
+    setTimeout(() => {
+      dom.modal.classList.remove('celebrate');
+    }, 1600);
+  }
+}
+
+function animateWpm(target) {
+  const duration = 600;
+  const start = performance.now();
+  dom.mWpm.textContent = 0;
+  function step(now) {
+    const t = Math.min((now - start) / duration, 1);
+    // ease-out cubic
+    const eased = 1 - Math.pow(1 - t, 3);
+    dom.mWpm.textContent = Math.round(eased * target);
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+/* ── Modal ── */
+function closeModal() { dom.modal.classList.remove('show'); }
+dom.modal.addEventListener('click', e => { if (e.target === dom.modal) closeModal(); });
+document.getElementById('m-next').addEventListener('click', () => { closeModal(); newSnippet(); });
+document.getElementById('m-retry').addEventListener('click', () => { closeModal(); load(S.idx, true); focusInput(); });
+
+/* ── History ── */
+function renderHistory() {
+  if (!S.history.length) {
+    dom.history.innerHTML = '<span style="font-size:11px;color:var(--dim);">no runs yet</span>';
+    return;
+  }
+  const frag = document.createDocumentFragment();
+  S.history.forEach(h => {
+    const div = document.createElement('div');
+    div.className = 'h-entry';
+    div.innerHTML = `<span class="h-wpm">${h.wpm}</span> wpm · ${h.acc}% <span style="color:var(--dim)">${h.lang}</span>`;
+    frag.appendChild(div);
+  });
+  dom.history.textContent = '';
+  dom.history.appendChild(frag);
+}
+
+/* ── Navigation ── */
+function newSnippet() {
+  const list = getList();
+  let idx;
+  do { idx = Math.floor(Math.random() * list.length); }
+  while (list.length > 1 && idx === S.idx);
+  load(idx, true);
+  focusInput();
+}
+document.getElementById('btn-new').addEventListener('click',   newSnippet);
+document.getElementById('btn-retry').addEventListener('click', () => { load(S.idx, true); focusInput(); });
+document.getElementById('btn-skip').addEventListener('click',  () => {
+  const list = getList();
+  let idx;
+  do { idx = Math.floor(Math.random() * list.length); }
+  while (list.length > 1 && idx === S.idx);
+  load(idx, true); focusInput();
+});
+
+document.getElementById('nav-langs').addEventListener('click', e => {
+  const btn = e.target.closest('.nav-lang');
+  if (!btn) return;
+  document.querySelectorAll('.nav-lang').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  S.lang = btn.dataset.lang;
+  newSnippet();
+});
+
+document.getElementById('diff-row').addEventListener('click', e => {
+  const btn = e.target.closest('.diff-btn');
+  if (!btn) return;
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  S.diff = btn.dataset.diff;
+  newSnippet();
+});
+
+document.getElementById('time-row').addEventListener('click', e => {
+  const btn = e.target.closest('.time-btn');
+  if (!btn) return;
+  document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  S.timeLimit = parseInt(btn.dataset.time);
+  if (!S.started) setStats(0, 100, S.timeLimit, 0);
+  newSnippet();
+});
+
+/* ═══════════════════════════════════════════════════════════
+   ON-SCREEN KEYBOARD  — full layout with special characters
+═══════════════════════════════════════════════════════════ */
+
+// Each entry: [mainLabel, shiftLabel, code]  or [mainLabel] for no shift
+const KBD_ROWS = [
+  // Number row (with shift symbols)
+  [
+    ['`','~','Backquote'], ['1','!','Digit1'], ['2','@','Digit2'], ['3','#','Digit3'],
+    ['4','$','Digit4'], ['5','%','Digit5'], ['6','^','Digit6'], ['7','&','Digit7'],
+    ['8','*','Digit8'], ['9','(','Digit9'], ['0',')','Digit0'],
+    ['-','_','Minus'], ['=','+','Equal'], ['⌫','','Backspace'],
+  ],
+  // QWERTY row
+  [
+    ['Tab','','Tab'],
+    ['q','Q','KeyQ'],['w','W','KeyW'],['e','E','KeyE'],['r','R','KeyR'],['t','T','KeyT'],
+    ['y','Y','KeyY'],['u','U','KeyU'],['i','I','KeyI'],['o','O','KeyO'],['p','P','KeyP'],
+    ['[','{','BracketLeft'],[']','}','BracketRight'],['\\','|','Backslash'],
+  ],
+  // Home row
+  [
+    ['Caps','','CapsLock'],
+    ['a','A','KeyA'],['s','S','KeyS'],['d','D','KeyD'],['f','F','KeyF'],['g','G','KeyG'],
+    ['h','H','KeyH'],['j','J','KeyJ'],['k','K','KeyK'],['l','L','KeyL'],
+    [';',':','Semicolon'],["'",'"','Quote'],['↵','','Enter'],
+  ],
+  // Bottom row
+  [
+    ['Shift','','ShiftLeft'],
+    ['z','Z','KeyZ'],['x','X','KeyX'],['c','C','KeyC'],['v','V','KeyV'],['b','B','KeyB'],
+    ['n','N','KeyN'],['m','M','KeyM'],[',','<','Comma'],['.','>','Period'],['/','?','Slash'],
+    ['Shift','','ShiftRight'],
+  ],
+  // Space row
+  [['space','','Space']],
+];
+
+// Wide keys
+const WIDE_KEYS = new Set(['Tab','Caps','↵','⌫','Shift']);
+const SPACE_KEYS = new Set(['space']);
+
+// Map from typed char → key element(s)
+const charToKey = {};
+
+function buildKeyboard() {
+  const rowIds = ['kbd-row-num','kbd-row-1','kbd-row-2','kbd-row-3','kbd-row-4'];
+  KBD_ROWS.forEach((row, ri) => {
+    const rowEl = document.getElementById(rowIds[ri]);
+    row.forEach(([main, shift, code]) => {
+      const el = document.createElement('div');
+      el.className = 'key';
+      el.dataset.code = code;
+      if (SPACE_KEYS.has(main)) el.classList.add('space');
+      else if (WIDE_KEYS.has(main)) el.classList.add(main === '↵' || main === '⌫' ? 'wider' : 'wide');
+
+      if (shift && shift !== '') {
+        const sl = document.createElement('span');
+        sl.className = 'shift-label';
+        sl.textContent = shift;
+        el.appendChild(sl);
+      }
+      const ml = document.createElement('span');
+      ml.className = 'main-label';
+      ml.textContent = main === 'space' ? '' : main;
+      el.appendChild(ml);
+
+      rowEl.appendChild(el);
+
+      // Register typed chars → this key
+      const register = ch => {
+        if (!charToKey[ch]) charToKey[ch] = [];
+        charToKey[ch].push(el);
+      };
+      if (main.length === 1)  register(main);
+      if (shift && shift.length === 1) register(shift);
+      if (main === 'space')   register(' ');
+      if (main === '↵')       register('\n');
+      if (main === 'Tab')     register('    '); // 4 spaces for indentation
+    });
+  });
+}
+
+function updateKeyboard() {
+  if (!S.kbdVisible) return;
+  // Clear all highlights
+  document.querySelectorAll('.key.next-key').forEach(k => k.classList.remove('next-key'));
+  // Highlight next expected key
+  if (S.typed.length < S.chars.length) {
+    const nextChar = S.chars[S.typed.length];
+    const keys = charToKey[nextChar];
+    if (keys) keys.forEach(k => k.classList.add('next-key'));
+  }
+}
+
+function flashKey(key) {
+  const ch = key === 'Enter' ? '\n' : key === 'Tab' ? '    ' : key; // Tab = 4 spaces
+  const expected = S.chars[S.typed.length - 1] ?? null; // expected char at that position
+  const actual   = S.typed[S.typed.length - 1] ?? null;
+  const correct  = expected !== null && actual === expected;
+  const keys = charToKey[ch] || charToKey[ch.toLowerCase()];
+  if (!keys) return;
+  keys.forEach(el => {
+    el.classList.remove('flash-correct', 'flash-wrong', 'next-key');
+    el.classList.add(correct ? 'flash-correct' : 'flash-wrong');
+    setTimeout(() => el.classList.remove('flash-correct', 'flash-wrong'), 160);
+  });
+}
+
+document.getElementById('kbd-toggle').addEventListener('click', () => {
+  S.kbdVisible = !S.kbdVisible;
+  dom.kbdToggle.classList.toggle('active', S.kbdVisible);
+  dom.keyboard.classList.toggle('visible', S.kbdVisible);
+  if (S.kbdVisible) updateKeyboard();
+  focusInput();
+});
+
+document.getElementById('sound-toggle').addEventListener('click', () => {
+  toggleSound();
+  const btn = document.getElementById('sound-toggle');
+  btn.classList.toggle('enabled', soundEnabled);
+});
+
+document.getElementById('stats-toggle').addEventListener('click', () => {
+  window.location.href = 'dashboard.html';
+});
+
+document.getElementById('help-toggle').addEventListener('click', () => {
+  document.getElementById('help-modal').classList.add('show');
+});
+
+document.getElementById('close-help').addEventListener('click', () => {
+  document.getElementById('help-modal').classList.remove('show');
+});
+
+document.getElementById('help-modal').addEventListener('click', e => {
+  if (e.target.id === 'help-modal') document.getElementById('help-modal').classList.remove('show');
+});
+
+// Show help with ? key
+document.addEventListener('keydown', e => {
+  if (e.key === '?' && !S.started && document.activeElement !== dom.input) {
+    document.getElementById('help-modal').classList.add('show');
+  }
+});
+
+/* ── Init ── */
+buildKeyboard();
+// Restore persisted nav stats
+dom.navBest.textContent = S.bestWpm || '--';
+dom.navRuns.textContent = S.runs;
+renderHistory();
+// Initialize sound button state
+if (soundEnabled) {
+  document.getElementById('sound-toggle').classList.add('enabled');
+}
+load(0, true);
+focusInput();
+
+// Hide loading screen after content is ready
+setTimeout(() => hideLoadingScreen(), 600);
+</script>
+
+</body>
+</html>
