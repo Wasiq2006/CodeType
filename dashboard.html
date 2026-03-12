@@ -475,6 +475,163 @@
     @keyframes dotPulse { 0%, 80%, 100% { opacity: 0.2; transform: scale(0.85); }
       40% { opacity: 1; transform: scale(1); } }
 
+    /* ── Weakness Section ── */
+    .weakness-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .weakness-bar-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px 16px;
+    }
+
+    .weakness-bar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .weakness-bar-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    .weakness-bar-count {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--dim);
+    }
+
+    .weakness-bar-track {
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .weakness-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .weakness-bar-fill.level-high   { background: var(--wrong); }
+    .weakness-bar-fill.level-medium { background: #fbbf24; }
+    .weakness-bar-fill.level-low    { background: var(--correct); }
+
+    .weakness-chars {
+      margin-top: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--dim);
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .weakness-chars span {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1px 4px;
+      margin-right: 3px;
+      color: var(--wrong);
+    }
+
+    .recommendations-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .rec-card {
+      background: linear-gradient(135deg, rgba(248, 113, 113, 0.06) 0%, rgba(248, 113, 113, 0.02) 100%);
+      border: 1px solid rgba(248, 113, 113, 0.15);
+      border-radius: 8px;
+      padding: 16px;
+      transition: all 0.2s ease;
+    }
+
+    .rec-card:hover {
+      background: linear-gradient(135deg, rgba(248, 113, 113, 0.12) 0%, rgba(248, 113, 113, 0.06) 100%);
+      border-color: rgba(248, 113, 113, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .rec-card-why {
+      font-size: 10px;
+      color: var(--wrong);
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+      opacity: 0.8;
+    }
+
+    .rec-card-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--hi);
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .rec-card-meta {
+      font-size: 11px;
+      color: var(--dim);
+      margin-bottom: 12px;
+      letter-spacing: 0.04em;
+    }
+
+    .rec-card-btn {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--hi);
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      padding: 5px 12px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .rec-card-btn:hover {
+      border-color: var(--hi);
+      background: rgba(232, 232, 232, 0.06);
+    }
+
+    .weakness-insight {
+      background: rgba(248, 113, 113, 0.05);
+      border: 1px solid rgba(248, 113, 113, 0.12);
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text);
+      line-height: 1.6;
+      letter-spacing: 0.03em;
+    }
+
+    .weakness-insight strong {
+      color: var(--wrong);
+      font-weight: 500;
+    }
+
     @media (max-width: 600px) {
       .difficulty-stats { grid-template-columns: 1fr; }
       .analytics-grid { grid-template-columns: 1fr 1fr; }
@@ -531,6 +688,149 @@
       return arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null;
     }
 
+    function avg(arr) {
+      return arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null;
+    }
+
+    /* ── Weakness detection helpers ── */
+    const CATEGORIES = {
+      brackets:    { label: 'Brackets',    chars: '()[]{}',                tip: 'You struggle with bracket characters.' },
+      operators:   { label: 'Operators',   chars: '+-*/=<>!&|^%~',         tip: 'You struggle with operator symbols.' },
+      punctuation: { label: 'Punctuation', chars: ':;,."\'`_#@\\',         tip: 'You struggle with punctuation & special chars.' },
+      digits:      { label: 'Digits',      chars: '0123456789',             tip: 'You make errors on number characters.' },
+      indentation: { label: 'Indentation', chars: ' ',                      tip: 'You struggle with spaces and indentation.' },
+      letters:     { label: 'Letters',     chars: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', tip: 'You make typos on alphabetic characters.' },
+    };
+
+    const RECOMMENDATIONS = {
+      brackets: [
+        { why: 'bracket-heavy', title: 'valid parentheses', meta: 'python · easy · stack', lang: 'python', diff: 'easy' },
+        { why: 'bracket-heavy', title: 'number of islands', meta: 'python · medium · dfs',  lang: 'python', diff: 'medium' },
+        { why: 'bracket-heavy', title: 'n-queens',          meta: 'python · hard · backtracking', lang: 'python', diff: 'hard' },
+      ],
+      operators: [
+        { why: 'operator-heavy', title: 'single number',    meta: 'python · easy · bit ops',  lang: 'python', diff: 'easy' },
+        { why: 'operator-heavy', title: 'missing number',   meta: 'python · easy · math',     lang: 'python', diff: 'easy' },
+        { why: 'operator-heavy', title: 'binary addition',  meta: 'c++ · medium · bitwise',   lang: 'cpp',    diff: 'medium' },
+      ],
+      punctuation: [
+        { why: 'punctuation-heavy', title: 'way too long words', meta: 'python · easy · string', lang: 'python', diff: 'easy' },
+        { why: 'punctuation-heavy', title: 'reverse string',     meta: 'c++ · easy · string',   lang: 'cpp',    diff: 'easy' },
+        { why: 'punctuation-heavy', title: 'group anagrams',     meta: 'python · medium · hash', lang: 'python', diff: 'medium' },
+      ],
+      digits: [
+        { why: 'digit-heavy', title: 'palindrome number',   meta: 'python · easy · math',     lang: 'python', diff: 'easy' },
+        { why: 'digit-heavy', title: 'climbing stairs',     meta: 'python · easy · dp',       lang: 'python', diff: 'easy' },
+        { why: 'digit-heavy', title: 'coin change',         meta: 'python · medium · dp',     lang: 'python', diff: 'medium' },
+      ],
+      indentation: [
+        { why: 'indentation-heavy', title: 'number of islands',  meta: 'python · medium · dfs', lang: 'python', diff: 'medium' },
+        { why: 'indentation-heavy', title: 'coin change',        meta: 'python · medium · dp',  lang: 'python', diff: 'medium' },
+        { why: 'indentation-heavy', title: 'word ladder',        meta: 'python · hard · bfs',   lang: 'python', diff: 'hard' },
+      ],
+      letters: [
+        { why: 'alphabet-heavy', title: 'two sum',           meta: 'python · easy · hash map', lang: 'python', diff: 'easy' },
+        { why: 'alphabet-heavy', title: 'best time to buy',  meta: 'python · easy · greedy',   lang: 'python', diff: 'easy' },
+        { why: 'alphabet-heavy', title: 'top k frequent',    meta: 'python · medium · bucket', lang: 'python', diff: 'medium' },
+      ],
+    };
+
+    function categorizeChar(ch) {
+      for (const [cat, { chars }] of Object.entries(CATEGORIES)) {
+        if (chars.includes(ch)) return cat;
+      }
+      return null;
+    }
+
+    function buildWeaknessSection(history) {
+      // Aggregate charErrors from all history runs (recent runs count double)
+      const totals = {};
+      history.forEach((run, idx) => {
+        if (!run.charErrors) return;
+        const weight = idx === 0 ? 2 : 1; // most recent run weighted 2×
+        for (const [ch, cnt] of Object.entries(run.charErrors)) {
+          const cat = categorizeChar(ch);
+          if (!cat) continue;
+          totals[cat] = (totals[cat] || 0) + cnt * weight;
+        }
+      });
+
+      const totalErrors = Object.values(totals).reduce((a, b) => a + b, 0);
+      if (totalErrors === 0) return ''; // no error data yet
+
+      // Sort categories by error count
+      const sorted = Object.entries(totals)
+        .sort((a, b) => b[1] - a[1])
+        .filter(([, v]) => v > 0);
+
+      const maxVal = sorted[0][1];
+
+      // Collect per-char top mistakes for labels
+      const charTotals = {};
+      history.forEach((run, idx) => {
+        if (!run.charErrors) return;
+        const weight = idx === 0 ? 2 : 1;
+        for (const [ch, cnt] of Object.entries(run.charErrors)) {
+          charTotals[ch] = (charTotals[ch] || 0) + cnt * weight;
+        }
+      });
+      const topChars = Object.entries(charTotals).sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+      // Build bars HTML
+      let barsHtml = '';
+      sorted.forEach(([cat, val]) => {
+        const pct = Math.round((val / maxVal) * 100);
+        const level = pct > 65 ? 'high' : pct > 30 ? 'medium' : 'low';
+        const catChars = topChars
+          .filter(([ch]) => categorizeChar(ch) === cat)
+          .slice(0, 5)
+          .map(([ch]) => `<span>${ch === ' ' ? '·' : ch === '\n' ? '↵' : ch}</span>`)
+          .join('');
+        barsHtml += `
+          <div class="weakness-bar-item">
+            <div class="weakness-bar-header">
+              <span class="weakness-bar-label">${CATEGORIES[cat].label}</span>
+              <span class="weakness-bar-count">${val} err${val !== 1 ? 's' : ''}</span>
+            </div>
+            <div class="weakness-bar-track">
+              <div class="weakness-bar-fill level-${level}" style="width:${pct}%"></div>
+            </div>
+            ${catChars ? `<div class="weakness-chars">${catChars}</div>` : ''}
+          </div>`;
+      });
+
+      // Top weakness for insight message
+      const [topCat] = sorted[0];
+      const insightTip = CATEGORIES[topCat]?.tip || '';
+
+      // Recommendations for top 2 weakness categories
+      const weakCats = sorted.slice(0, 2).map(([c]) => c);
+      let recsHtml = '';
+      weakCats.forEach(cat => {
+        const recs = (RECOMMENDATIONS[cat] || []).slice(0, 2);
+        recs.forEach(r => {
+          recsHtml += `
+            <div class="rec-card">
+              <div class="rec-card-why">${r.why}</div>
+              <div class="rec-card-title">${r.title}</div>
+              <div class="rec-card-meta">${r.meta}</div>
+              <a class="rec-card-btn" href="index.html?lang=${r.lang}&diff=${r.diff}">practice →</a>
+            </div>`;
+        });
+      });
+
+      return `
+        <div class="stats-section">
+          <div class="section-title">weakness analysis</div>
+          <div class="weakness-insight">
+            <strong>insight:</strong> ${insightTip} Focus on the snippets below to improve.
+          </div>
+          <div class="weakness-grid">${barsHtml}</div>
+          <div class="section-title" style="margin-top:20px">recommended practice</div>
+          <div class="recommendations-grid">${recsHtml}</div>
+        </div>`;
+    }
+
     function renderStats() {
       const { history, bestWpm, runs } = getStats();
 
@@ -584,6 +884,9 @@
       const accuracyConsistency = history.length > 1 ? calculateConsistency(history.map(r => r.acc)) : 0;
       const fastestRun = Math.max(...history.map(r => r.wpm));
       const slowestRun = Math.min(...history.map(r => r.wpm));
+
+      // Weakness Analysis
+      const weaknessSectionHtml = buildWeaknessSection(history);
 
       dom.container.innerHTML = `
         <div class="stats-title">statistics</div>
@@ -645,6 +948,8 @@
             </div>
           </div>
         </div>
+
+        ${weaknessSectionHtml}
 
         <div class="stats-section">
           <div class="section-title">performance by difficulty</div>

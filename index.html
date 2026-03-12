@@ -1637,6 +1637,7 @@ const S = {
   burstCorrect: 0,
   charTimestamps: [], // Track when each character was typed
   wpmTimeline: [], // WPM calculated at intervals
+  charErrors: {}, // Track expected char → error count for weakness detection
   history: (() => { try { return JSON.parse(localStorage.getItem('codetype_history')) || []; } catch(e) { return []; } })(),
   bestWpm: parseInt(localStorage.getItem('codetype_best_wpm')) || 0,
   runs: parseInt(localStorage.getItem('codetype_runs')) || 0,
@@ -1665,6 +1666,7 @@ function load(idx, animate, keepTimer = false) {
     S.startTime = S.elapsed = S.errors = S.totalTyped = S.burstCorrect = 0;
     S.charTimestamps = [];
     S.wpmTimeline = [];
+    S.charErrors = {};
   }
 
   if (animate) {
@@ -1816,7 +1818,7 @@ function typeChar(ch) {
     for (let i = 0; i < ch.length; i++) {
       if (S.typed.length >= S.chars.length) break; // break so finish() still runs below
       const isCorrect = ch[i] === S.chars[S.typed.length];
-      if (!isCorrect) { S.errors++; hadError = true; }
+      if (!isCorrect) { S.errors++; hadError = true; const ec = S.chars[S.typed.length]; S.charErrors[ec] = (S.charErrors[ec] || 0) + 1; }
       else { playSound('correct'); }
       S.totalTyped++;
       S.typed.push(ch[i]);
@@ -1825,7 +1827,7 @@ function typeChar(ch) {
     if (hadError) { triggerShake(); playSound('wrong'); }
   } else {
     const isCorrect = ch === S.chars[S.typed.length];
-    if (!isCorrect) { S.errors++; triggerShake(); playSound('wrong'); }
+    if (!isCorrect) { S.errors++; triggerShake(); playSound('wrong'); const ec = S.chars[S.typed.length]; S.charErrors[ec] = (S.charErrors[ec] || 0) + 1; }
     else { playSound('correct'); }
     S.totalTyped++;
     S.typed.push(ch);
@@ -1988,7 +1990,7 @@ function finish() {
   S.runs++;
   if (wpm > S.bestWpm) { S.bestWpm = wpm; dom.navBest.textContent = wpm; }
   dom.navRuns.textContent = S.runs;
-  S.history.unshift({ wpm, acc, lang: S.lang, diff: S.diff, ts: Date.now(), wpmTimeline });
+  S.history.unshift({ wpm, acc, lang: S.lang, diff: S.diff, ts: Date.now(), wpmTimeline, charErrors: Object.assign({}, S.charErrors) });
   if (S.history.length > 50) S.history.length = 50; // Keep more history for analytics
   localStorage.setItem('codetype_history', JSON.stringify(S.history));
   localStorage.setItem('codetype_best_wpm', S.bestWpm);
@@ -2257,6 +2259,28 @@ renderHistory();
 if (soundEnabled) {
   document.getElementById('sound-toggle').classList.add('enabled');
 }
+
+// Apply URL params (?lang=python&diff=easy) from dashboard recommendations
+(function applyUrlParams() {
+  const params = new URLSearchParams(window.location.search);
+  const lang = params.get('lang');
+  const diff = params.get('diff');
+  if (lang && ['python', 'cpp'].includes(lang)) {
+    document.querySelectorAll('.nav-lang').forEach(b => {
+      b.classList.toggle('active', b.dataset.lang === lang);
+    });
+    S.lang = lang;
+  }
+  if (diff && ['easy', 'medium', 'hard'].includes(diff)) {
+    document.querySelectorAll('.diff-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.diff === diff);
+    });
+    S.diff = diff;
+    const timeLimits = { easy: 60, medium: 90, hard: 120 };
+    S.timeLimit = timeLimits[diff] || 60;
+  }
+})();
+
 load(0, true);
 focusInput();
 
