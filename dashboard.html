@@ -660,8 +660,8 @@
   </div>
 
   <nav>
-    <button class="nav-back" onclick="window.location.href='codetype.html'">&larr; back to typing</button>
-    <a href="codetype.html" class="nav-logo">codetype</a>
+    <button class="nav-back" onclick="window.location.href='/'">&larr; back to typing</button>
+    <a href="/" class="nav-logo">codetype</a>
     <button class="nav-reset" id="reset-btn" title="Reset all statistics">reset data</button>
   </nav>
 
@@ -814,7 +814,7 @@
               <div class="rec-card-why">${r.why}</div>
               <div class="rec-card-title">${r.title}</div>
               <div class="rec-card-meta">${r.meta}</div>
-              <a class="rec-card-btn" href="index.html?lang=${r.lang}&diff=${r.diff}">practice →</a>
+              <a class="rec-card-btn" href="/?lang=${r.lang}&diff=${r.diff}">practice →</a>
             </div>`;
         });
       });
